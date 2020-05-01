@@ -89,4 +89,4 @@ def all_load_data(base_path):
     
     return raw_data
 
-all_raw_data = all_load_data("Preference_Extraction/data/simple_env_1/")
+#all_raw_data = all_load_data("Preference_Extraction/data/simple_env_1/")
