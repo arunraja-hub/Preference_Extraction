@@ -5,7 +5,7 @@ import pickle
 import random
 import sys
 import time
-
+import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
 import PIL
