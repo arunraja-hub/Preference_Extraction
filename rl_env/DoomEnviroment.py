@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from tf_agents.environments import py_environment, utils
 from tf_agents.specs import array_spec
-from tf_agents.trajectories import time_step
+from tf_agents.trajectories import time_step as ts
 from vizdoom import DoomGame
 
 """
