@@ -6,17 +6,19 @@ from tf_agents.environments import py_environment, utils
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 from vizdoom import DoomGame
+import gin
 
 """
     DoomEnviroment Class, code adapted from
     https://github.com/arconsis/blog-playing-doom-with-tf-agents/blob/master/doom/DoomEnvironment.py
 """
 
+@gin.configurable
 class DoomEnvironment(py_environment.PyEnvironment):
 
-    def __init__(self):
+    def __init__(self, config_name):
         super().__init__()
-        self._game = self.configure_doom()
+        self._game = self.configure_doom(config_name)
         self._num_actions = self._game.get_available_buttons_size()
         
         self._action_spec = array_spec.BoundedArraySpec(
@@ -25,7 +27,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
             shape=(84, 84, 3), dtype=np.float32, minimum=0, maximum=1, name='observation')
 
     @staticmethod
-    def configure_doom(config_name="Preference_Extraction/rl_env/custom.cfg"):
+    def configure_doom(config_name):
         game = DoomGame()
         game.load_config(config_name)
         game.set_window_visible(False)
@@ -62,7 +64,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
 
     def render(self, mode='rgb_array'):
         """ Return image for rendering. """
-        return self.get_screen_buffer_frame()
+        return self.get_screen_buffer_preprocessed() * 255
 
 
     def get_screen_buffer_preprocessed(self):
@@ -84,7 +86,12 @@ class DoomEnvironment(py_environment.PyEnvironment):
             return np.zeros((240, 320, 3), dtype=np.float32)
         else:
             return np.rollaxis(self._game.get_state().screen_buffer, 0, 3)
-            
+
+
+@gin.configurable
+def tf_agents_env(_):
+    return DoomEnvironment()
+
 if __name__ == "__main__":
-	environment = DoomEnvironment()
+	environment = DoomEnvironment('custom.cfg')
 	utils.validate_py_environment(environment, episodes=5)

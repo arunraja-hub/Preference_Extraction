@@ -6,14 +6,17 @@ import tf_agents.environments.suite_gym
 import tf_agents.networks.q_network
 import trainer
 import tf_agents.replay_buffers.tf_uniform_replay_buffer
+import rl_env.DoomEnviroment
 
 import gin
 
 include 'configs/base.gin'
 
 AGENT_CLASS = @dqn_agent.DqnAgent
-ENV_LOAD_FN = @suite_gym.load
-ENV_NAME = 'CartPole-v0'
+ENV_LOAD_FN = @tf_agents_env
+ENV_NAME = ''
+# Change the environment used here.
+DoomEnvironment.config_name = 'rl_env/basic.cfg'
 NUM_GLOBAL_STEPS = 100000
 
 trainer.train.train_checkpoint_interval = 10000
@@ -32,6 +35,7 @@ tf_uniform_replay_buffer.TFUniformReplayBuffer.batch_size = %NUM_TRAIN_ENVIRONME
 tf_uniform_replay_buffer.TFUniformReplayBuffer.max_length = 100000
 tf_uniform_replay_buffer.TFUniformReplayBuffer.as_dataset.sample_batch_size = 64
 
+dqn_agent.DqnAgent.td_errors_loss_fn = @tf.losses.mean_squared_error
 dqn_agent.DqnAgent.gamma = 0.99
 dqn_agent.DqnAgent.reward_scale_factor = 1.0
 dqn_agent.DqnAgent.gradient_clipping = None

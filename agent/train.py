@@ -10,8 +10,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import functools
-import json
 import os
 
 from absl import app
@@ -27,7 +25,7 @@ import trainer
 
 flags.DEFINE_string('root_dir', os.getenv('TEST_UNDECLARED_OUTPUTS_DIR'),
                     'Root directory for writing logs/summaries/checkpoints.')
-flags.DEFINE_multi_string('gin_file', 'configs/config.gin',
+flags.DEFINE_multi_string('gin_file', 'configs/dqn.gin',
                           'Paths to the study config files.')
 flags.DEFINE_multi_string('gin_bindings', None, 'Gin binding to pass through.')
 FLAGS = flags.FLAGS

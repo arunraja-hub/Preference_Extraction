@@ -1,8 +1,7 @@
 #-*-Python-*-
 
 import tf_agents.environments.parallel_py_environment
-# trainer and evaluator modules are imported by train.py and eval.py (one set
-# for TF1 and one set for TF2).
+# trainer and evaluator modules are imported by train.py and eval.py
 
 AGENT_CLASS = None
 ENV_LOAD_FN = None
