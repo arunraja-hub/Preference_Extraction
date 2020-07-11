@@ -32,7 +32,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         self._action_spec = array_spec.BoundedArraySpec(
             shape=(), dtype=np.int64, minimum=0, maximum=self._num_actions - 1, name='action')
         
-        all_channels = 3 + timeout_channel + ammo_channel
+        all_channels = 4 + timeout_channel + ammo_channel
         self._observation_spec = array_spec.BoundedArraySpec(
             shape=(self.obs_shape[0], self.obs_shape[1], all_channels), dtype=np.float32, minimum=0, maximum=1, name='observation')
         
@@ -95,11 +95,12 @@ class DoomEnvironment(py_environment.PyEnvironment):
             resized = np.dstack((resized, self.get_remaining_time_channel()))
         if self.ammo_channel:
             resized = np.dstack((resized, self.get_remaining_ammo_channel()))
+        resized = np.dstack((resized, self.get_health_channel()))
         return resized.astype(np.float32)
 
     def convert_to_channel(self, value):
         # Make sure don't go below 0 cause of round error
-        new_val = value / 1.05 + .025
+        new_val = value / 1.2 + .1
         return np.ones(self.obs_shape) * new_val
 
     def get_remaining_time_channel(self):
@@ -107,6 +108,9 @@ class DoomEnvironment(py_environment.PyEnvironment):
 
     def get_remaining_ammo_channel(self):
         return self.convert_to_channel(self.get_weapon_remaining_ammo() / 50.0)
+
+    def get_health_channel(self):
+        return self.convert_to_channel(self._game.get_game_variable(GameVariable.HEALTH) / 100.0)
 
     def get_weapon_remaining_ammo(self):
         for am_ix, ammo in enumerate([GameVariable.AMMO1, GameVariable.AMMO2, GameVariable.AMMO3,

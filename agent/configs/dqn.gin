@@ -16,7 +16,7 @@ AGENT_CLASS = @dqn_agent.DqnAgent
 ENV_LOAD_FN = @tf_agents_env
 ENV_NAME = ''
 # Change the environment used here.
-DoomEnvironment.config_name = 'rl_env/basic.cfg'
+DoomEnvironment.config_name = 'rl_env/custom.cfg'
 NUM_GLOBAL_STEPS = 100000
 
 trainer.train.train_checkpoint_interval = 10000
