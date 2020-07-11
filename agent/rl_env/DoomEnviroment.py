@@ -106,7 +106,6 @@ class DoomEnvironment(py_environment.PyEnvironment):
         return self.convert_to_channel((self._game.get_episode_timeout() - self._game.get_episode_time()) / float(self._game.get_episode_timeout()))
 
     def get_remaining_ammo_channel(self):
-        print("ammo", self.get_weapon_remaining_ammo())
         return self.convert_to_channel(self.get_weapon_remaining_ammo() / 50.0)
 
     def get_weapon_remaining_ammo(self):
