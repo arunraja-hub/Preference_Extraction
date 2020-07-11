@@ -95,23 +95,23 @@ class DoomEnvironment(py_environment.PyEnvironment):
         frame = frame[40:-30, :]
         # The cv2 dims are backwards
         resized = cv2.resize(frame, (self.obs_shape[1], self.obs_shape[0]))
+        resized = np.divide(resized, 255, dtype=np.float32)
         if self.timeout_channel:
             resized = np.dstack((resized, self.get_remaining_time_channel()))
         if self.ammo_channel:
             resized = np.dstack((resized, self.get_remaining_ammo_channel()))
-        return np.divide(resized, 255, dtype=np.float32)
+        return resized.astype(np.float32)
+
+    def convert_to_channel(self, value):
+        # Make sure don't go below 0 cause of round error
+        new_val = value / 1.05 + .025
+        return np.ones(self.obs_shape) * new_val
 
     def get_remaining_time_channel(self):
-        time_channel = np.zeros(self.obs_shape[0] * self.obs_shape[1])
-        time_left = self._game.get_episode_timeout() - self._game.get_episode_time()
-        time_channel[:time_left * 10] = 1
-        return time_channel.reshape(self.obs_shape)
+        return self.convert_to_channel((self._game.get_episode_timeout() - self._game.get_episode_time()) / float(self._game.get_episode_timeout()))
 
     def get_remaining_ammo_channel(self):
-        ammo_channel = np.zeros(self.obs_shape[0] * self.obs_shape[1])
-        ammo_left = self.get_weapon_remaining_ammo()
-        ammo_channel[:ammo_left * 10] = 1
-        return ammo_channel.reshape(self.obs_shape)
+        return self.convert_to_channel(self.get_weapon_remaining_ammo() / 50.0)
 
     def get_weapon_remaining_ammo(self):
         for am_ix, ammo in enumerate([GameVariable.AMMO1, GameVariable.AMMO2, GameVariable.AMMO3,
@@ -153,8 +153,6 @@ class SaveStateWrapper(wrappers.PyEnvironmentBaseWrapper):
             self.save_num += 1
 
         return time_step
-
-
 
 @gin.configurable
 def tf_agents_env(_):
