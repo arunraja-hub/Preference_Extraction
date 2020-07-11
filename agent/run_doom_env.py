@@ -7,6 +7,6 @@ import gin.tf.external_configurables
 if __name__ == "__main__":
     gin.parse_config_files_and_bindings(['configs/dqn.gin'], '', skip_unknown=True)
 
-    environment = SaveStateWrapper(tf_agents_env(None), 'saved_env_states', .01)
+    environment = SaveStateWrapper(tf_agents_env(None), 'saved_env_states', 1.0)
 
-    utils.validate_py_environment(environment, episodes=5)
+    utils.validate_py_environment(environment, episodes=1)

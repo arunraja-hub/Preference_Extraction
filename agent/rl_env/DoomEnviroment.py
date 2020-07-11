@@ -76,7 +76,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
 
     def render(self, mode='rgb_array'):
         """ Return image for rendering. """
-        return (self.get_screen_buffer_preprocessed() * 255)[:,:,:3]
+        return (self.get_screen_buffer_preprocessed() * 1)[:,:,:3]
 
 
     def get_screen_buffer_preprocessed(self):
@@ -91,11 +91,11 @@ class DoomEnvironment(py_environment.PyEnvironment):
         # The cv2 dims are backwards
         resized = cv2.resize(frame, (self.obs_shape[1], self.obs_shape[0]))
         resized = np.divide(resized, 255, dtype=np.float32)
+        resized = np.dstack((resized, self.get_health_channel()))  # Health channel is always index 3
         if self.timeout_channel:
             resized = np.dstack((resized, self.get_remaining_time_channel()))
         if self.ammo_channel:
             resized = np.dstack((resized, self.get_remaining_ammo_channel()))
-        resized = np.dstack((resized, self.get_health_channel()))
         return resized.astype(np.float32)
 
     def convert_to_channel(self, value):
@@ -104,13 +104,16 @@ class DoomEnvironment(py_environment.PyEnvironment):
         return np.ones(self.obs_shape) * new_val
 
     def get_remaining_time_channel(self):
-        return self.convert_to_channel((self._game.get_episode_timeout() - self._game.get_episode_time()) / float(self._game.get_episode_timeout()))
+        remaining_time = self._game.get_episode_timeout() - self._game.get_episode_time()
+        return self.convert_to_channel(remaining_time / float(self._game.get_episode_timeout()))
 
     def get_remaining_ammo_channel(self):
-        return self.convert_to_channel(self.get_weapon_remaining_ammo() / 50.0)
+        remaining_ammo = self.get_weapon_remaining_ammo()
+        return self.convert_to_channel(remaining_ammo / 50.0)
 
     def get_health_channel(self):
-        return self.convert_to_channel(self._game.get_game_variable(GameVariable.HEALTH) / 100.0)
+        remaining_health = self._game.get_game_variable(GameVariable.HEALTH)
+        return self.convert_to_channel(remaining_health / 100.0)
 
     def get_weapon_remaining_ammo(self):
         for am_ix, ammo in enumerate([GameVariable.AMMO1, GameVariable.AMMO2, GameVariable.AMMO3,
@@ -137,7 +140,7 @@ class SaveStateWrapper(wrappers.PyEnvironmentBaseWrapper):
         self.save_num = 0
 
     def convert_img(self, img):
-        return (img * 255).astype(int)
+        return cv2.cvtColor(np.float32(img * 255), cv2.COLOR_RGB2BGR)
 
     def _step(self, action):
         time_step = self._env.step(action)
