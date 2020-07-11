@@ -20,24 +20,20 @@ import random
 @gin.configurable
 class DoomEnvironment(py_environment.PyEnvironment):
 
-    def __init__(self, config_name, episode_timeout=1000, obs_shape = (60, 100), timeout_channel=True, ammo_channel=True):
+    def __init__(self, config_name, episode_timeout=1000, obs_shape = (60, 100), frame_skip=4, timeout_channel=True, ammo_channel=True):
         super().__init__()
 
         self.obs_shape = obs_shape
-
         self._game = self.configure_doom(config_name, episode_timeout, timeout_channel)
         self.timeout_channel = timeout_channel
         self.ammo_channel = ammo_channel
         self._num_actions = self._game.get_available_buttons_size()
+        self._frame_skip = frame_skip
         
         self._action_spec = array_spec.BoundedArraySpec(
             shape=(), dtype=np.int64, minimum=0, maximum=self._num_actions - 1, name='action')
         
-        all_channels = 5
-        if not timeout_channel:
-            all_channels -= 1
-        if not ammo_channel:
-            all_channels -= 1
+        all_channels = 3 + timeout_channel + ammo_channel
         self._observation_spec = array_spec.BoundedArraySpec(
             shape=(self.obs_shape[0], self.obs_shape[1], all_channels), dtype=np.float32, minimum=0, maximum=1, name='observation')
         
@@ -71,7 +67,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         one_hot[action] = 1
 
         # execute action and receive reward
-        reward = self._game.make_action(one_hot)
+        reward = self._game.make_action(one_hot, self._frame_skip)
 
         # return transition depending on game state
         if self._game.is_episode_finished():
@@ -111,6 +107,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         return self.convert_to_channel((self._game.get_episode_timeout() - self._game.get_episode_time()) / float(self._game.get_episode_timeout()))
 
     def get_remaining_ammo_channel(self):
+        print("ammo", self.get_weapon_remaining_ammo())
         return self.convert_to_channel(self.get_weapon_remaining_ammo() / 50.0)
 
     def get_weapon_remaining_ammo(self):
