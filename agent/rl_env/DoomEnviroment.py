@@ -137,19 +137,18 @@ class SaveStateWrapper(wrappers.PyEnvironmentBaseWrapper):
 
         self.save_num = 0
 
+    def convert_img(self, img):
+        return (img * 255).astype(int)
+
     def _step(self, action):
         time_step = self._env.step(action)
 
         if random.random() < self.save_prob:
-
-            cv2.imwrite(os.path.join(self.path, str(self.save_num)+'_0.png'), (time_step.observation[:, :, :3]* 255).astype(int))
+            cv2.imwrite(os.path.join(self.path, str(self.save_num)+'_0.png'), self.convert_img(time_step.observation[:, :, :3]))
 
             for i in range(3, time_step.observation.shape[2]):
-                print("i", i)
-                print(np.min(time_step.observation[:, :, i]))
-                print(np.max(time_step.observation[:, :, i]))
                 cv2.imwrite(os.path.join(self.path, str(self.save_num) + '_' + str(i) + '.png'),
-                            (time_step.observation[:, :, i] * 255).astype(int))
+                            self.convert_img(time_step.observation[:, :, i]))
 
             self.save_num += 1
 
