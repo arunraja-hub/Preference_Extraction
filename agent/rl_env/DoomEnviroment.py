@@ -2,13 +2,12 @@ import os
 from math import floor
 import cv2
 import numpy as np
-from tf_agents.environments import py_environment, utils
+from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 from tf_agents.environments import wrappers
 from vizdoom import DoomGame
 from vizdoom import GameVariable
-import matplotlib
 import gin
 import random
 
@@ -154,9 +153,3 @@ class SaveStateWrapper(wrappers.PyEnvironmentBaseWrapper):
 @gin.configurable
 def tf_agents_env(_):
     return DoomEnvironment()
-
-if __name__ == "__main__":
-    environment = SaveStateWrapper(DoomEnvironment('custom.cfg'), 'saved_env_states', .01)
-
-
-    utils.validate_py_environment(environment, episodes=5)
