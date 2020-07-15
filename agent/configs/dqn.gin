@@ -14,13 +14,12 @@ include 'configs/base.gin'
 
 AGENT_CLASS = @dqn_agent.DqnAgent
 ENV_LOAD_FN = @tf_agents_env
-ENV_NAME = ''
-# Change the environment used here.
-DoomEnvironment.config_name = 'rl_env/custom.cfg'
+ENV_NAME = '' # Change the environment used here.
+DoomEnvironment.config_name = 'rl_env/basic.cfg'
 NUM_GLOBAL_STEPS = 100000
 
-trainer.train.train_checkpoint_interval = 10000
-trainer.train.policy_checkpoint_interval = 5000
+trainer.train.train_checkpoint_interval = 20000
+trainer.train.policy_checkpoint_interval = 20000
 trainer.train.rb_checkpoint_interval = 20000
 
 trainer.train.initial_collect_driver_class = \
@@ -46,7 +45,7 @@ dqn_agent.DqnAgent.debug_summaries = False
 dqn_agent.DqnAgent.summarize_grads_and_vars = False
 
 dqn_agent.DqnAgent.optimizer = @critic/tf.train.AdamOptimizer()
-critic/tf.train.AdamOptimizer.learning_rate = 1e-3
+critic/tf.train.AdamOptimizer.learning_rate = 1e-2
 
 dqn_agent.DqnAgent.q_network = @q_network.QNetwork()
 q_network.QNetwork.input_tensor_spec = @environment_specs.observation_spec()

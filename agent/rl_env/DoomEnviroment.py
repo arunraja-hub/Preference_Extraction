@@ -10,6 +10,7 @@ from vizdoom import DoomGame
 from vizdoom import GameVariable
 import gin
 import random
+import imageio
 
 """
     DoomEnviroment Class, code adapted from
@@ -154,6 +155,18 @@ class SaveStateWrapper(wrappers.PyEnvironmentBaseWrapper):
 
             self.save_num += 1
 
+        return time_step
+    
+class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
+    def __init__(self, env, filename):
+        super(SaveVideoWrapper, self).__init__(env)
+        self.filename = filename
+        self.video = imageio.get_writer(filename, fps=30)
+
+    def _step(self, action):
+        time_step = self._env.step(action)
+        for frame in range(self._env._frame_skip):
+            self.video.append_data(self._env.render())
         return time_step
 
 @gin.configurable
