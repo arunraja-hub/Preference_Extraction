@@ -11,6 +11,12 @@ from vizdoom import GameVariable
 import gin
 import random
 import imageio
+import imageio.core.util
+
+def silence_imageio_warning(*args, **kwargs):
+    pass
+
+imageio.core.util._precision_warn = silence_imageio_warning
 
 """
     DoomEnviroment Class, code adapted from
@@ -172,3 +178,7 @@ class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
 @gin.configurable
 def tf_agents_env(_):
     return DoomEnvironment()
+
+@gin.configurable
+def tf_agents_env_with_video(_):
+    return SaveVideoWrapper(tf_agents_env(None), 'states_video.mp4')
