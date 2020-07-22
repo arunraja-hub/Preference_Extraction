@@ -68,18 +68,22 @@ class DoomEnvironment(py_environment.PyEnvironment):
             # The last action ended the episode. Ignore the current action and start a new episode.
             return self.reset()
 
-        # construct one hot encoded action as required by ViZDoom
+        reward = 0
+        for i in range(self._frame_skip):
+            if i == 0:
+                reward += self.take_action(action)
+            else:
+                reward += self.take_action(0)
+
+            if self._game.is_episode_finished():
+                return ts.termination(self.get_screen_buffer_preprocessed(), reward)
+
+        return ts.transition(self.get_screen_buffer_preprocessed(), reward)
+
+    def take_action(self, action):
         one_hot = [0] * self._num_actions
         one_hot[action] = 1
-
-        # execute action and receive reward
-        reward = self._game.make_action(one_hot, self._frame_skip)
-
-        # return transition depending on game state
-        if self._game.is_episode_finished():
-            return ts.termination(self.get_screen_buffer_preprocessed(), reward)
-        else:
-            return ts.transition(self.get_screen_buffer_preprocessed(), reward)
+        return self._game.make_action(one_hot)
 
     def render(self, mode='rgb_array'):
         """ Return image for rendering. """
@@ -171,8 +175,7 @@ class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
 
     def _step(self, action):
         time_step = self._env.step(action)
-        for frame in range(self._env._frame_skip):
-            self.video.append_data(self._env.render())
+        self.video.append_data(self._env.render())
         return time_step
 
 @gin.configurable
