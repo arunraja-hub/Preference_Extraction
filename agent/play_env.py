@@ -14,11 +14,13 @@ def get_action():
         if event.type == pygame.QUIT:
             pygame.quit()
         if event.type == KEYDOWN and event.key == K_d:
-            return 0
-        if event.type == KEYDOWN and event.key == K_a:
             return 1
-        if event.type == KEYDOWN and event.key == K_SPACE:
+        if event.type == KEYDOWN and event.key == K_a:
             return 2
+        if event.type == KEYDOWN and event.key == K_s:
+            return 0
+        if event.type == KEYDOWN and event.key == K_SPACE:
+            return 3
 
 
 gin.parse_config_files_and_bindings(['configs/dqn.gin'], '', skip_unknown=True)
@@ -31,9 +33,6 @@ display = pygame.display.set_mode((size[1], size[0]))
 total_reward = 0
 time_step = env.reset()
 while not time_step.is_last():
-
-    action = get_action()
-
     obs = time_step.observation[:, :, :3]
     obs *= 255
 
@@ -43,6 +42,9 @@ while not time_step.is_last():
 
     display.blit(surf, (0, 0))
     pygame.display.update()
+
+    action = get_action()
+
     time_step = env.step(action)
     total_reward += time_step.reward
 
