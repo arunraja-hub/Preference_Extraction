@@ -37,7 +37,7 @@ while not time_step.is_last():
     obs *= 255
 
     surf = pygame.surfarray.make_surface(obs)
-    surf = pygame.transform.scale(surf, (size))
+    surf = pygame.transform.scale(surf, size)
     surf = pygame.transform.rotate(surf, -90)
 
     display.blit(surf, (0, 0))

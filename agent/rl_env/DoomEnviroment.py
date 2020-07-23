@@ -26,7 +26,7 @@ imageio.core.util._precision_warn = silence_imageio_warning
 @gin.configurable
 class DoomEnvironment(py_environment.PyEnvironment):
 
-    def __init__(self, config_name, episode_timeout=1000, obs_shape = (60, 100), frame_skip=4, timeout_channel=True, ammo_channel=True):
+    def __init__(self, config_name, frame_skip, episode_timeout, obs_shape, timeout_channel=True, ammo_channel=True):
         super().__init__()
 
         self.obs_shape = obs_shape
