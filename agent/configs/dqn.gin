@@ -18,7 +18,7 @@ ENV_NAME = '' # Change the environment used here.
 DoomEnvironment.config_name = 'rl_env/custom.cfg'
 DoomEnvironment.frame_skip = 8
 DoomEnvironment.obs_shape = (60, 100)
-DoomEnvironment.episode_timeout = 1000
+DoomEnvironment.episode_timeout = 2000
 NUM_GLOBAL_STEPS = 100000
 
 trainer.train.train_checkpoint_interval = 20000
