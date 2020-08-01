@@ -14,11 +14,13 @@ import imageio
 import imageio.core.util
 from collections import namedtuple
 
-class VarReward:
-    def __init__(self, name, doom_var, reward):
+class DoomVar:
+    def __init__(self, name, doom_var, reward, add_channel, max_val):
         self.name = name
         self.doom_var = doom_var
         self.reward = reward
+        self.add_channel = add_channel
+        self.max_val = max_val
         self.pre_val = None
 
 def silence_imageio_warning(*args, **kwargs):
@@ -34,13 +36,11 @@ imageio.core.util._precision_warn = silence_imageio_warning
 @gin.configurable
 class DoomEnvironment(py_environment.PyEnvironment):
 
-    def __init__(self, config_name, frame_skip, episode_timeout, obs_shape, start_ammo, living_reward, kill_imp_reward, kill_demon_reward, ammo_reward, health_reward, timeout_channel=True, ammo_channel=True):
+    def __init__(self, config_name, frame_skip, episode_timeout, obs_shape, start_ammo, living_reward, kill_imp_reward, kill_demon_reward, ammo_reward, health_reward):
         super().__init__()
 
         self.obs_shape = obs_shape
-        self._game = self.configure_doom(config_name, episode_timeout, timeout_channel)
-        self.timeout_channel = timeout_channel
-        self.ammo_channel = ammo_channel
+        self._game = self.configure_doom(config_name, episode_timeout)
         self._num_actions = self._game.get_available_buttons_size()
         self._frame_skip = frame_skip
         self.start_ammo = start_ammo
@@ -49,24 +49,23 @@ class DoomEnvironment(py_environment.PyEnvironment):
         self._action_spec = array_spec.BoundedArraySpec(
             shape=(), dtype=np.int64, minimum=0, maximum=self._num_actions - 1, name='action')
         
-        all_channels = 4 + timeout_channel + ammo_channel
+        all_channels = 6
         self._observation_spec = array_spec.BoundedArraySpec(
             shape=(self.obs_shape[0], self.obs_shape[1], all_channels), dtype=np.float32, minimum=0, maximum=1, name='observation')
 
-        self._var_rewards = [
-            VarReward(name='kill_imp', doom_var=GameVariable.USER1, reward=kill_imp_reward),
-            VarReward(name='kill_demon', doom_var=GameVariable.USER2, reward=kill_demon_reward),
-            VarReward(name='ammo', doom_var=GameVariable.AMMO6, reward=ammo_reward),
-            VarReward(name='health', doom_var=GameVariable.HEALTH, reward=health_reward),
+        self._doom_vars = [
+            DoomVar(name='kill_imp', doom_var=GameVariable.USER1, reward=kill_imp_reward, add_channel=False, max_val=None),
+            DoomVar(name='kill_demon', doom_var=GameVariable.USER2, reward=kill_demon_reward, add_channel=False, max_val=None),
+            DoomVar(name='health', doom_var=GameVariable.HEALTH, reward=health_reward, add_channel=True, max_val=100),
+            DoomVar(name='ammo', doom_var=GameVariable.AMMO6, reward=ammo_reward, add_channel=True, max_val=self.start_ammo),
         ]
         
     @staticmethod
-    def configure_doom(config_name, episode_timeout, timeout_channel):
+    def configure_doom(config_name, episode_timeout):
         game = DoomGame()
         game.load_config(config_name)
         game.set_window_visible(False)
-        if timeout_channel:
-            game.set_episode_timeout(episode_timeout)
+        game.set_episode_timeout(episode_timeout)
         game.init()
         return game
 
@@ -82,8 +81,8 @@ class DoomEnvironment(py_environment.PyEnvironment):
             self._game.send_game_command("give CellPack_Single")
         self.take_action(0)
 
-        for i in range(len(self._var_rewards)):
-            self._var_rewards[i].pre_val = self._game.get_game_variable(self._var_rewards[i].doom_var)
+        for i in range(len(self._doom_vars)):
+            self._doom_vars[i].pre_val = self._game.get_game_variable(self._doom_vars[i].doom_var)
 
         return ts.restart(self.get_screen_buffer_preprocessed())
 
@@ -92,25 +91,23 @@ class DoomEnvironment(py_environment.PyEnvironment):
             # The last action ended the episode. Ignore the current action and start a new episode.
             return self.reset()
 
-        reward = 0
         for i in range(self._frame_skip):
             if i == 0:
                 self.take_action(action)
             else:
                 self.take_action(0)
-            reward += self.get_reward()
 
             if self._game.is_episode_finished():
-                return ts.termination(self.get_screen_buffer_preprocessed(), reward)
+                return ts.termination(self.get_screen_buffer_preprocessed(), self.get_reward())
 
-        return ts.transition(self.get_screen_buffer_preprocessed(), reward)
+        return ts.transition(self.get_screen_buffer_preprocessed(), self.get_reward())
 
     def get_reward(self):
-        reward = self._living_reward
-        for i in range(len(self._var_rewards)):
-            current_val = self._game.get_game_variable(self._var_rewards[i].doom_var)
-            reward += (current_val - self._var_rewards[i].pre_val) * self._var_rewards[i].reward
-            self._var_rewards[i].pre_val = current_val
+        reward = self._living_reward * self._frame_skip
+        for i in range(len(self._doom_vars)):
+            current_val = self._game.get_game_variable(self._doom_vars[i].doom_var)
+            reward += (current_val - self._doom_vars[i].pre_val) * self._doom_vars[i].reward
+            self._doom_vars[i].pre_val = current_val
 
         return reward
 
@@ -137,11 +134,13 @@ class DoomEnvironment(py_environment.PyEnvironment):
         # The cv2 dims are backwards
         resized = cv2.resize(frame, (self.obs_shape[1], self.obs_shape[0]))
         resized = np.divide(resized, 255, dtype=np.float32)
-        resized = np.dstack((resized, self.get_health_channel()))  # Health channel is always index 3
-        if self.timeout_channel:
-            resized = np.dstack((resized, self.get_remaining_time_channel()))
-        if self.ammo_channel:
-            resized = np.dstack((resized, self.get_remaining_ammo_channel()))
+
+        for doom_var in self._doom_vars:
+            if doom_var.add_channel:
+                val = float(self._game.get_game_variable(doom_var.doom_var)) / float(doom_var.max_val)
+                resized = np.dstack((resized, self.convert_to_channel(val)))
+
+        resized = np.dstack((resized, self.get_remaining_time_channel()))
 
         return resized.astype(np.float32)
 
@@ -153,22 +152,6 @@ class DoomEnvironment(py_environment.PyEnvironment):
     def get_remaining_time_channel(self):
         remaining_time = self._game.get_episode_timeout() - self._game.get_episode_time()
         return self.convert_to_channel(remaining_time / float(self._game.get_episode_timeout()))
-
-    def get_remaining_ammo_channel(self):
-        remaining_ammo = self.get_weapon_remaining_ammo()
-        return self.convert_to_channel(remaining_ammo / self.start_ammo)
-
-    def get_health_channel(self):
-        remaining_health = self._game.get_game_variable(GameVariable.HEALTH)
-        return self.convert_to_channel(remaining_health / 100.0)
-
-    def get_weapon_remaining_ammo(self):
-        for am_ix, ammo in enumerate([GameVariable.AMMO1, GameVariable.AMMO2, GameVariable.AMMO3,
-                              GameVariable.AMMO4, GameVariable.AMMO5, GameVariable.AMMO6,
-                              GameVariable.AMMO7, GameVariable.AMMO8, GameVariable.AMMO9]):
-            if (am_ix+1) == int(self._game.get_game_variable(GameVariable.SELECTED_WEAPON)):
-                return int(self._game.get_game_variable(ammo))
-        return 0
 
     def get_screen_buffer_frame(self):
         """ Get current screen buffer or an empty screen buffer if episode is finished"""

@@ -36,8 +36,8 @@ while not time_step.is_last():
     obs = time_step.observation[:, :, :3]
 
     print("health", time_step.observation[0, 0, 3])
-    print("time", time_step.observation[0, 0, 4])
-    print("ammo", time_step.observation[0, 0, 5])
+    print("ammo", time_step.observation[0, 0, 4])
+    print("time", time_step.observation[0, 0, 5])
 
     obs *= 255
 
