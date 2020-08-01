@@ -26,7 +26,7 @@ imageio.core.util._precision_warn = silence_imageio_warning
 @gin.configurable
 class DoomEnvironment(py_environment.PyEnvironment):
 
-    def __init__(self, config_name, frame_skip, episode_timeout, obs_shape, timeout_channel=True, ammo_channel=True):
+    def __init__(self, config_name, frame_skip, episode_timeout, obs_shape, start_ammo, timeout_channel=True, ammo_channel=True):
         super().__init__()
 
         self.obs_shape = obs_shape
@@ -35,6 +35,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         self.ammo_channel = ammo_channel
         self._num_actions = self._game.get_available_buttons_size()
         self._frame_skip = frame_skip
+        self.start_ammo = start_ammo
         
         self._action_spec = array_spec.BoundedArraySpec(
             shape=(), dtype=np.int64, minimum=0, maximum=self._num_actions - 1, name='action')
@@ -61,6 +62,9 @@ class DoomEnvironment(py_environment.PyEnvironment):
 
     def _reset(self):
         self._game.new_episode()
+        for _ in range(self.start_ammo):
+            self._game.send_game_command("give CellPack_Single")
+        self.take_action(0)
         return ts.restart(self.get_screen_buffer_preprocessed())
 
     def _step(self, action):
@@ -83,6 +87,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
     def take_action(self, action):
         one_hot = [0] * self._num_actions
         one_hot[action] = 1
+
         return self._game.make_action(one_hot)
 
     def render(self, mode='rgb_array'):
@@ -120,6 +125,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
 
     def get_remaining_ammo_channel(self):
         remaining_ammo = self.get_weapon_remaining_ammo()
+        print("remaining_ammo", remaining_ammo)
         return self.convert_to_channel(remaining_ammo / 50.0)
 
     def get_health_channel(self):
