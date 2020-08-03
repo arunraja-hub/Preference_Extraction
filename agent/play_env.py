@@ -1,7 +1,7 @@
 """Allows playing the environment from the tf agents environment. That way it includes all post processing"""
 
 import gin
-from  rl_env.DoomEnviroment import tf_agents_env
+from  rl_env.DoomEnviroment import DoomEnvironment
 import gin.tf.external_configurables
 import pygame
 from pygame.locals import *
@@ -24,7 +24,7 @@ def get_action():
 
 
 gin.parse_config_files_and_bindings(['configs/dqn.gin'], '', skip_unknown=True)
-env = tf_agents_env(None)
+env = DoomEnvironment()
 
 pygame.init()
 size = (600, 1000)
@@ -34,6 +34,11 @@ total_reward = 0
 time_step = env.reset()
 while not time_step.is_last():
     obs = time_step.observation[:, :, :3]
+
+    print("health", time_step.observation[0, 0, 3])
+    print("ammo", time_step.observation[0, 0, 4])
+    print("time", time_step.observation[0, 0, 5])
+
     obs *= 255
 
     surf = pygame.surfarray.make_surface(obs)
