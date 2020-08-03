@@ -1,18 +1,18 @@
 import os
-from math import floor
-import cv2
-import numpy as np
-from tf_agents.environments import py_environment
-from tf_agents.specs import array_spec
-from tf_agents.trajectories import time_step as ts
-from tf_agents.environments import wrappers
-from vizdoom import DoomGame
-from vizdoom import GameVariable
-import gin
 import random
+
+import cv2
+import gin
 import imageio
 import imageio.core.util
-from collections import namedtuple
+import numpy as np
+from tf_agents.environments import py_environment
+from tf_agents.environments import wrappers
+from tf_agents.specs import array_spec
+from tf_agents.trajectories import time_step as ts
+from vizdoom import DoomGame
+from vizdoom import GameVariable
+
 
 class DoomVar:
     def __init__(self, name, doom_var, reward, add_channel, max_val):
@@ -23,8 +23,10 @@ class DoomVar:
         self.max_val = max_val
         self.pre_val = None
 
+
 def silence_imageio_warning(*args, **kwargs):
     pass
+
 
 imageio.core.util._precision_warn = silence_imageio_warning
 
@@ -33,10 +35,12 @@ imageio.core.util._precision_warn = silence_imageio_warning
     https://github.com/arconsis/blog-playing-doom-with-tf-agents/blob/master/doom/DoomEnvironment.py
 """
 
+
 @gin.configurable
 class DoomEnvironment(py_environment.PyEnvironment):
 
-    def __init__(self, config_name, frame_skip, episode_timeout, obs_shape, start_ammo, living_reward, kill_imp_reward, kill_demon_reward, ammo_reward, health_reward):
+    def __init__(self, config_name, frame_skip, episode_timeout, obs_shape, start_ammo, living_reward, kill_imp_reward,
+                 kill_demon_reward, ammo_reward, health_reward):
         super().__init__()
 
         self.obs_shape = obs_shape
@@ -45,21 +49,25 @@ class DoomEnvironment(py_environment.PyEnvironment):
         self._frame_skip = frame_skip
         self.start_ammo = start_ammo
         self._living_reward = living_reward
-        
+
         self._action_spec = array_spec.BoundedArraySpec(
             shape=(), dtype=np.int64, minimum=0, maximum=self._num_actions - 1, name='action')
-        
+
         all_channels = 6
         self._observation_spec = array_spec.BoundedArraySpec(
-            shape=(self.obs_shape[0], self.obs_shape[1], all_channels), dtype=np.float32, minimum=0, maximum=1, name='observation')
+            shape=(self.obs_shape[0], self.obs_shape[1], all_channels), dtype=np.float32, minimum=0, maximum=1,
+            name='observation')
 
         self._doom_vars = [
-            DoomVar(name='kill_imp', doom_var=GameVariable.USER1, reward=kill_imp_reward, add_channel=False, max_val=None),
-            DoomVar(name='kill_demon', doom_var=GameVariable.USER2, reward=kill_demon_reward, add_channel=False, max_val=None),
+            DoomVar(name='kill_imp', doom_var=GameVariable.USER1, reward=kill_imp_reward, add_channel=False,
+                    max_val=None),
+            DoomVar(name='kill_demon', doom_var=GameVariable.USER2, reward=kill_demon_reward, add_channel=False,
+                    max_val=None),
             DoomVar(name='health', doom_var=GameVariable.HEALTH, reward=health_reward, add_channel=True, max_val=100),
-            DoomVar(name='ammo', doom_var=GameVariable.AMMO6, reward=ammo_reward, add_channel=True, max_val=self.start_ammo),
+            DoomVar(name='ammo', doom_var=GameVariable.AMMO6, reward=ammo_reward, add_channel=True,
+                    max_val=self.start_ammo),
         ]
-        
+
     @staticmethod
     def configure_doom(config_name, episode_timeout):
         game = DoomGame()
@@ -119,8 +127,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
 
     def render(self, mode='rgb_array'):
         """ Return image for rendering. """
-        return (self.get_screen_buffer_preprocessed() * 1)[:,:,:3]
-
+        return (self.get_screen_buffer_preprocessed() * 1)[:, :, :3]
 
     def get_screen_buffer_preprocessed(self):
         """
@@ -160,6 +167,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         else:
             return np.rollaxis(self._game.get_state().screen_buffer, 0, 3)
 
+
 class SaveStateWrapper(wrappers.PyEnvironmentBaseWrapper):
     def __init__(self, env, path, save_prob):
         super(SaveStateWrapper, self).__init__(env)
@@ -176,7 +184,8 @@ class SaveStateWrapper(wrappers.PyEnvironmentBaseWrapper):
         time_step = self._env.step(action)
 
         if random.random() < self.save_prob:
-            cv2.imwrite(os.path.join(self.path, str(self.save_num)+'_0.png'), self.convert_img(time_step.observation[:, :, :3]))
+            cv2.imwrite(os.path.join(self.path, str(self.save_num) + '_0.png'),
+                        self.convert_img(time_step.observation[:, :, :3]))
 
             for i in range(3, time_step.observation.shape[2]):
                 cv2.imwrite(os.path.join(self.path, str(self.save_num) + '_' + str(i) + '.png'),
@@ -185,7 +194,8 @@ class SaveStateWrapper(wrappers.PyEnvironmentBaseWrapper):
             self.save_num += 1
 
         return time_step
-    
+
+
 class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
     def __init__(self, env, filename):
         super(SaveVideoWrapper, self).__init__(env)
@@ -197,9 +207,11 @@ class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
         self.video.append_data(self._env.render())
         return time_step
 
+
 @gin.configurable
 def tf_agents_env(_):
     return DoomEnvironment()
+
 
 @gin.configurable
 def tf_agents_env_with_video(_):

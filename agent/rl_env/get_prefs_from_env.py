@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from vizdoom import *
-import random
 import time
+
+from vizdoom import *
 
 game = DoomGame()
 game.load_config("custom.cfg")
