@@ -196,7 +196,6 @@ def train(
         agent.collect_data_spec)
     logging.info('RB capacity: %i', replay_buffer.capacity)
     agent_observers = [replay_buffer.add_batch]
-
     initial_collect_policy = agent.collect_policy
     if initial_collect_random:
       initial_collect_policy = random_tf_policy.RandomTFPolicy(
@@ -265,6 +264,8 @@ def train(
           num_steps=train_sequence_length + 1,
           num_parallel_calls=3,
           single_deterministic_pass=True).repeat(train_steps_per_iteration)
+      if len([1 for _ in dataset]) == 0:
+             logging.warning('PPO Agent replay buffer as dataset is empty')
       return iter(dataset)
 
     # For off policy agents, one iterator is created for the entire training
@@ -321,10 +322,8 @@ def train(
       start_time = time.time()
       time_step, policy_state = collect_driver.run(
           time_step=time_step, policy_state=policy_state)
-
       if isinstance(agent, PPO_AGENTS):
         iterator = get_data_iter_repeated(replay_buffer)
-
       for _ in range(train_steps_per_iteration):
         if isinstance(agent, REINFORCE_AGENTS):
           total_loss = train_with_gather_all()

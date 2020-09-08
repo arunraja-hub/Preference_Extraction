@@ -2,6 +2,7 @@ import os
 import random
 
 import cv2
+import csv
 import gin
 import imageio
 import imageio.core.util
@@ -207,6 +208,24 @@ class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
         self.video.append_data(self._env.render())
         return time_step
 
+class AnalyseAmmoWrapper(wrappers.PyEnvironmentBaseWrapper):
+    def __init__(self, env, filename):
+        super(AnalyseAmmoWrapper, self).__init__(env)
+        try:
+            os.remove(filename)
+        except:
+            pass
+        csvfile = open(filename, 'a')
+        self.csvwriter = csv.writer(csvfile, delimiter=',',quotechar='"')
+        self.csvwriter.writerow(['timeStep','ammoLeft'])
+        
+
+    def _step(self, action):
+        time_step = self._env.step(action)
+        step_ammo = self._game.get_game_variable(GameVariable.AMMO6)
+        step_time = self._env._game.get_episode_time()
+        self.csvwriter.writerow([step_time, step_ammo])
+        return time_step
 
 @gin.configurable
 def tf_agents_env(_):
@@ -216,3 +235,11 @@ def tf_agents_env(_):
 @gin.configurable
 def tf_agents_env_with_video(_):
     return SaveVideoWrapper(tf_agents_env(None), 'states_video.mp4')
+
+@gin.configurable
+def tf_agents_env_with_ammo(_):
+    return AnalyseAmmoWrapper(tf_agents_env(None), 'eval_ammos.csv')
+
+@gin.configurable
+def tf_agents_env_with_state(_):
+    return SaveStateWrapper(tf_agents_env(None), 'states_dir', 0.95)

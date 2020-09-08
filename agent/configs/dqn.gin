@@ -13,10 +13,10 @@ import gin
 include 'configs/base.gin'
 
 AGENT_CLASS = @dqn_agent.DqnAgent
-ENV_LOAD_FN = @tf_agents_env
+ENV_LOAD_FN = @tf_agents_env_with_ammo
 ENV_NAME = '' # Change the environment used here.
 DoomEnvironment.config_name = 'rl_env/custom.cfg'
-DoomEnvironment.frame_skip = 8
+DoomEnvironment.frame_skip = 4
 DoomEnvironment.obs_shape = (60, 100)
 DoomEnvironment.episode_timeout = 2000
 DoomEnvironment.start_ammo = 6
@@ -25,7 +25,7 @@ DoomEnvironment.kill_imp_reward = 100
 DoomEnvironment.kill_demon_reward = 10
 DoomEnvironment.ammo_reward = 5
 DoomEnvironment.health_reward = .5
-NUM_GLOBAL_STEPS = 100000
+NUM_GLOBAL_STEPS = 250000
 
 trainer.train.train_checkpoint_interval = 20000
 trainer.train.policy_checkpoint_interval = 20000
@@ -59,4 +59,4 @@ critic/tf.train.AdamOptimizer.learning_rate = 1e-2
 dqn_agent.DqnAgent.q_network = @q_network.QNetwork()
 q_network.QNetwork.input_tensor_spec = @environment_specs.observation_spec()
 q_network.QNetwork.action_spec = @environment_specs.action_spec()
-q_network.QNetwork.fc_layer_params = (100,)
+q_network.QNetwork.fc_layer_params = (800,)
