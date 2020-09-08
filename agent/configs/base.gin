@@ -3,6 +3,7 @@
 import tf_agents.environments.parallel_py_environment
 # trainer and evaluator modules are imported by train.py and eval.py
 
+ROOT_DIR = None
 AGENT_CLASS = None
 ENV_LOAD_FN = None
 ENV_NAME = ''
@@ -34,3 +35,5 @@ DoomEnvironment.kill_imp_reward = 100
 DoomEnvironment.kill_demon_reward = 10
 DoomEnvironment.ammo_reward = 5
 DoomEnvironment.health_reward = .5
+
+AnalyseAmmoWrapper.root_dir = %ROOT_DIR

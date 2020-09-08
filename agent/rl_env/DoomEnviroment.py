@@ -208,9 +208,11 @@ class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
         self.video.append_data(self._env.render())
         return time_step
 
+@gin.configurable
 class AnalyseAmmoWrapper(wrappers.PyEnvironmentBaseWrapper):
-    def __init__(self, env, filename):
+    def __init__(self, env, filename, root_dir):
         super(AnalyseAmmoWrapper, self).__init__(env)
+        filename = os.path.join(root_dir, filename)
         try:
             os.remove(filename)
         except:

@@ -6,6 +6,7 @@ import tf_agents.replay_buffers.tf_uniform_replay_buffer
 import gin
 import trainer
 import rl_env.DoomEnviroment
+import rl_env.AnalyseAmmoWrapper
 
 include 'configs/base.gin'
 
