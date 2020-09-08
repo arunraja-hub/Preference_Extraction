@@ -19,17 +19,6 @@ NUM_EVAL_EPISODES = 10
 REPLAY_BUFFER_CAPACITY = 501 # Extra timestep so that trajectory can hold final step (StepType.LAST)
 TRAIN_SEQUENCE_LENGTH = 500
 
-DoomEnvironment.config_name = 'rl_env/custom.cfg'
-DoomEnvironment.frame_skip = 4
-DoomEnvironment.obs_shape = (60, 100)
-DoomEnvironment.episode_timeout = 2000
-DoomEnvironment.start_ammo = 6
-DoomEnvironment.living_reward = 3
-DoomEnvironment.kill_imp_reward = 100
-DoomEnvironment.kill_demon_reward = 10
-DoomEnvironment.ammo_reward = 5
-DoomEnvironment.health_reward = .5
-
 trainer.train.train_checkpoint_interval = 500
 trainer.train.policy_checkpoint_interval = 500
 trainer.train.rb_checkpoint_interval = 2000

@@ -15,16 +15,6 @@ include 'configs/base.gin'
 AGENT_CLASS = @dqn_agent.DqnAgent
 ENV_LOAD_FN = @tf_agents_env_with_ammo
 ENV_NAME = '' # Change the environment used here.
-DoomEnvironment.config_name = 'rl_env/custom.cfg'
-DoomEnvironment.frame_skip = 4
-DoomEnvironment.obs_shape = (60, 100)
-DoomEnvironment.episode_timeout = 2000
-DoomEnvironment.start_ammo = 6
-DoomEnvironment.living_reward = 3
-DoomEnvironment.kill_imp_reward = 100
-DoomEnvironment.kill_demon_reward = 10
-DoomEnvironment.ammo_reward = 5
-DoomEnvironment.health_reward = .5
 NUM_GLOBAL_STEPS = 250000
 
 trainer.train.train_checkpoint_interval = 20000

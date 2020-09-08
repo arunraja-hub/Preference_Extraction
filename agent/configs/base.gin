@@ -23,3 +23,14 @@ evaluator.Evaluator.env_load_fn = %ENV_LOAD_FN
 evaluator.Evaluator.watch_until.max_num_global_steps = %NUM_GLOBAL_STEPS
 # Wait max 1 hour for checkpoints to prevent hangs.
 evaluator.Evaluator.watch_until.checkpoint_timeout_secs = 3600
+
+DoomEnvironment.config_name = 'rl_env/custom.cfg'
+DoomEnvironment.frame_skip = 4
+DoomEnvironment.obs_shape = (60, 100)
+DoomEnvironment.episode_timeout = 2000
+DoomEnvironment.start_ammo = 6
+DoomEnvironment.living_reward = 3
+DoomEnvironment.kill_imp_reward = 100
+DoomEnvironment.kill_demon_reward = 10
+DoomEnvironment.ammo_reward = 5
+DoomEnvironment.health_reward = .5
