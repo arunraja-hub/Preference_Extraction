@@ -74,6 +74,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         game = DoomGame()
         game.load_config(config_name)
         game.set_window_visible(False)
+        game.set_labels_buffer_enabled(True)
         game.set_episode_timeout(episode_timeout)
         game.init()
         return game
