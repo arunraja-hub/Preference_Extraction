@@ -20,11 +20,7 @@ NUM_EVAL_EPISODES = 10
 REPLAY_BUFFER_CAPACITY = 501 # Extra timestep so that trajectory can hold final step (StepType.LAST)
 TRAIN_SEQUENCE_LENGTH = 500
 
-trainer.train.train_checkpoint_interval = 500
-trainer.train.policy_checkpoint_interval = 500
-trainer.train.rb_checkpoint_interval = 2000
 trainer.train.train_sequence_length = %TRAIN_SEQUENCE_LENGTH
-trainer.train.log_interval = 50
 
 # No initial collection.
 trainer.train.initial_collect_random = False

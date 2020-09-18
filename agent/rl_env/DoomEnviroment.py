@@ -13,7 +13,7 @@ from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 from vizdoom import DoomGame
 from vizdoom import GameVariable
-
+import tensorflow as tf
 
 class DoomVar:
     def __init__(self, name, doom_var, reward, add_channel, max_val):
@@ -210,23 +210,28 @@ class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
 
 @gin.configurable
 class AnalyseAmmoWrapper(wrappers.PyEnvironmentBaseWrapper):
-    def __init__(self, env, filename, root_dir):
+    def __init__(self, env, filename, root_dir, save_prob=.01):
         super(AnalyseAmmoWrapper, self).__init__(env)
         filename = os.path.join(root_dir, filename)
         try:
             os.remove(filename)
         except:
             pass
-        csvfile = open(filename, 'a')
-        self.csvwriter = csv.writer(csvfile, delimiter=',',quotechar='"')
+        self.csvfile = tf.io.gfile.GFile(filename, 'w')
+        self.csvwriter = csv.writer(self.csvfile, delimiter=',',quotechar='"')
         self.csvwriter.writerow(['timeStep','ammoLeft'])
-        
+        self.save_prob = save_prob
+        self.should_save = False
 
     def _step(self, action):
         time_step = self._env.step(action)
-        step_ammo = self._game.get_game_variable(GameVariable.AMMO6)
-        step_time = self._env._game.get_episode_time()
-        self.csvwriter.writerow([step_time, step_ammo])
+        if time_step.step_type == ts.StepType.FIRST:
+            self.should_save = random.random() < self.save_prob
+            self.csvfile.flush()
+        if self.should_save:
+            step_ammo = self._game.get_game_variable(GameVariable.AMMO6)
+            step_time = self._env._game.get_episode_time()
+            self.csvwriter.writerow([step_time, step_ammo])
         return time_step
 
 @gin.configurable
