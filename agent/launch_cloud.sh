@@ -23,6 +23,7 @@ gcloud beta ai-platform jobs submit training $JOB_NAME \
   --region us-central1 \
   --master-image-uri $IMAGE_URI \
   --scale-tier BASIC \
+  --config hptuning_config.yaml \
   -- \
   --root_dir=gs://$BUCKET_ID/$JOB_NAME
 

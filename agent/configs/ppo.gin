@@ -18,9 +18,8 @@ COLLECT_EPISODES_PER_ITERATION = 10
 NUM_GLOBAL_STEPS = 20000
 NUM_EVAL_EPISODES = 10
 REPLAY_BUFFER_CAPACITY = 501 # Extra timestep so that trajectory can hold final step (StepType.LAST)
-TRAIN_SEQUENCE_LENGTH = 500
 
-trainer.train.train_sequence_length = %TRAIN_SEQUENCE_LENGTH
+trainer.train.train_sequence_length = 500
 
 # No initial collection.
 trainer.train.initial_collect_random = False

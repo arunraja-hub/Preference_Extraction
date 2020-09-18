@@ -1,0 +1,12 @@
+trainingInput:
+  hyperparameters:
+    goal: MAXIMIZE
+    hyperparameterMetricTag: accuracy
+    maxTrials: 4
+    maxParallelTrials: 1
+    params:
+      - parameterName: gin_bindings=trainer.train.train_sequence_length
+        type: INTEGER
+        minValue: 50
+        maxValue: 500
+        scaleType: UNIT_LINEAR_SCALE
