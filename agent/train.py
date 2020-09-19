@@ -25,6 +25,7 @@ import trainer
 
 flags.DEFINE_string('root_dir', os.getenv('TEST_UNDECLARED_OUTPUTS_DIR'),
                     'Root directory for writing logs/summaries/checkpoints.')
+flags.DEFINE_alias('job-dir', 'root_dir')
 flags.DEFINE_multi_string('gin_file', 'configs/ppo.gin',
                           'Paths to the study config files.')
 flags.DEFINE_multi_string('gin_bindings', None, 'Gin binding to pass through.')
@@ -33,7 +34,7 @@ FLAGS = flags.FLAGS
 
 
 def main(_):
-  print("NEW VERSION OF CODE")
+
   logging.set_verbosity(logging.INFO)
   tf.compat.v1.enable_v2_behavior()
   tf.compat.v1.enable_resource_variables()

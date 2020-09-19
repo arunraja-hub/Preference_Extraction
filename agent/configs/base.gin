@@ -17,12 +17,12 @@ trainer.train.num_parallel_environments = %NUM_TRAIN_ENVIRONMENTS
 trainer.train.env_load_fn = %ENV_LOAD_FN
 trainer.train.num_global_steps = %NUM_GLOBAL_STEPS
 
-trainer.train.train_checkpoint_interval = 5000
-trainer.train.policy_checkpoint_interval = 1000
-trainer.train.rb_checkpoint_interval = 20000
-trainer.train.log_interval = 50
-trainer.train.summary_interval=500
-trainer.train.summaries_flush_secs = 10
+trainer.train.train_checkpoint_interval = 99
+trainer.train.policy_checkpoint_interval = 99
+trainer.train.rb_checkpoint_interval = 99
+trainer.train.log_interval = 10
+trainer.train.summary_interval=10
+trainer.train.summaries_flush_secs = 1
 
 evaluator.Evaluator.agent_class = %AGENT_CLASS
 evaluator.Evaluator.env_name = %ENV_NAME

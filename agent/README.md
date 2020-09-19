@@ -26,7 +26,6 @@ To re push the base docker image:
 
 Modify the DockerfileBase file.
 
-    PROJECT_ID=preference-extraction
-    IMAGE_URI=gcr.io/$PROJECT_ID/pref_extract_base
-    docker build -f DockerfileBase -t $IMAGE_URI ./
-    docker push $IMAGE_URI
+    BASE_IMAGE_URI=gcr.io/preference-extraction/pref_extract_base
+    docker build -f DockerfileBase -t $BASE_IMAGE_URI ./
+    docker push $BASE_IMAGE_URI

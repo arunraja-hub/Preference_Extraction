@@ -101,7 +101,7 @@ def train(
     summaries_flush_secs=10,
     early_termination_fn=None,
     env_metric_factories=None):
-  print("print trainer train_sequence_length", train_sequence_length)
+  print("print trainer train_sequence_length", train_sequence_length, flush=True)
 
   if not agent_class:
     raise ValueError(
