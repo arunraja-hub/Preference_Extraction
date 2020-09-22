@@ -74,6 +74,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         game = DoomGame()
         game.load_config(config_name)
         game.set_window_visible(False)
+        game.set_labels_buffer_enabled(True)
         game.set_episode_timeout(episode_timeout)
         game.init()
         return game
@@ -208,9 +209,11 @@ class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
         self.video.append_data(self._env.render())
         return time_step
 
+@gin.configurable
 class AnalyseAmmoWrapper(wrappers.PyEnvironmentBaseWrapper):
-    def __init__(self, env, filename):
+    def __init__(self, env, filename, root_dir):
         super(AnalyseAmmoWrapper, self).__init__(env)
+        filename = os.path.join(root_dir, filename)
         try:
             os.remove(filename)
         except:
