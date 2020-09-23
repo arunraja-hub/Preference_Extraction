@@ -29,7 +29,6 @@ flags.DEFINE_alias('job-dir', 'root_dir')
 flags.DEFINE_multi_string('gin_file', 'configs/ppo.gin',
                           'Paths to the study config files.')
 flags.DEFINE_multi_string('gin_bindings', None, 'Gin binding to pass through.')
-
 FLAGS = flags.FLAGS
 
 def main(_):
