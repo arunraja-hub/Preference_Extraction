@@ -360,13 +360,12 @@ def train(
         train_metric.tf_summaries(
             train_step=global_step, step_metrics=train_metrics[:2])
 
-        hpt = hypertune.HyperTune()
-        hpt.report_hyperparameter_tuning_metric(
-            hyperparameter_metric_tag=train_metric.name,
-            metric_value=train_metric.result(),
-            global_step=global_step)
-
-        print("Reporting metric", train_metric.name, train_metric.result())
+        if global_step.numpy() % log_interval == 0:
+            hpt = hypertune.HyperTune()
+            hpt.report_hyperparameter_tuning_metric(
+                hyperparameter_metric_tag=train_metric.name,
+                metric_value=train_metric.result(),
+                global_step=global_step)
 
       if global_step.numpy() % train_checkpoint_interval == 0:
         train_checkpointer.save(global_step=global_step.numpy())

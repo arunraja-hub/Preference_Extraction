@@ -41,7 +41,7 @@ imageio.core.util._precision_warn = silence_imageio_warning
 class DoomEnvironment(py_environment.PyEnvironment):
 
     def __init__(self, config_name, frame_skip, episode_timeout, obs_shape, start_ammo, living_reward, kill_imp_reward,
-                 kill_demon_reward, ammo_reward, health_reward):
+                 kill_demon_reward, ammo_reward, health_reward, reward_divisor):
         super().__init__()
 
         self.obs_shape = obs_shape
@@ -50,6 +50,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         self._frame_skip = frame_skip
         self.start_ammo = start_ammo
         self._living_reward = living_reward
+        self._reward_divisor = reward_divisor
 
         self._action_spec = array_spec.BoundedArraySpec(
             shape=(), dtype=np.int64, minimum=0, maximum=self._num_actions - 1, name='action')
@@ -118,6 +119,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
             reward += (current_val - self._doom_vars[i].pre_val) * self._doom_vars[i].reward
             self._doom_vars[i].pre_val = current_val
 
+        reward /= self._reward_divisor
         return reward
 
     def take_action(self, action):

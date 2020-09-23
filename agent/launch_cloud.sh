@@ -13,6 +13,7 @@ echo launching $JOB_NAME
 BUCKET_ID=pref_extract_train_output
 PROJECT_ID=preference-extraction
 IMAGE_URI=gcr.io/$PROJECT_ID/pref_extract_train_container:$JOB_NAME
+JOB_DIR=gs://$BUCKET_ID/$JOB_NAME
 
 docker build -f Dockerfile -t $IMAGE_URI ./
 echo "Container built. You can test localy with"
@@ -27,14 +28,16 @@ then
     --region us-central1 \
     --master-image-uri $IMAGE_URI \
     --scale-tier BASIC \
-    --job-dir gs://$BUCKET_ID/$JOB_NAME \
+    --job-dir $JOB_DIR \
     --config hptuning_config.yaml
 else
   gcloud beta ai-platform jobs submit training $JOB_NAME \
     --region us-central1 \
     --master-image-uri $IMAGE_URI \
     --scale-tier BASIC \
-    --job-dir gs://$BUCKET_ID/$JOB_NAME
+    --job-dir $JOB_DIR
 fi
 
 echo "See the job training here: https://console.cloud.google.com/ai-platform/jobs?authuser=1&project=preference-extraction"
+
+echo "python3 -m tensorboard.main --logdir $JOB_DIR"
