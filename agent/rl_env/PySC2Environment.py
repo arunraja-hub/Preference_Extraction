@@ -26,23 +26,17 @@ from pysc2.lib import stopwatch
 # based on https://github.com/deepmind/pysc2/blob/master/pysc2/bin/agent.py and https://github.com/deepmind/pysc2/blob/master/pysc2/env/run_loop.py
 
 class PySC2Environment(py_environment.PyEnvironment):
+
     def __init__(self):
         super().__init__()
 
-        # TODO: How do I represent the action, which has C-style function calls? (https://github.com/deepmind/pysc2/blob/master/docs/environment.md#actions)
-        
-        # general player information observation (https://github.com/deepmind/pysc2/blob/master/docs/environment.md#general-player-information)
-        self._observation_spec = array_spec.ArraySpec(
-            shape=(11), dtype=np.float32, name='observation')
-
-        self.env = setup_env(self)
-    
+        self.env = self.setup_env()
 
     def action_spec(self):
-        return self._action_spec
+        return self.env.observation_spec()
 
     def observation_spec(self):
-        return self._observation_spec
+        return self.env.action_spec()
 
     def _reset(self):
         return self.env.reset()
@@ -51,6 +45,7 @@ class PySC2Environment(py_environment.PyEnvironment):
         return self.env.step(action)
 
     def setup_env(self):
+
         FLAGS = flags.FLAGS
         flags.DEFINE_bool("render", True, "Whether to render with pygame.")
         point_flag.DEFINE_point("feature_screen_size", "84",
@@ -102,7 +97,33 @@ class PySC2Environment(py_environment.PyEnvironment):
         flags.DEFINE_bool("battle_net_map", False, "Use the battle.net map version.")
         flags.mark_flag_as_required("map")
 
-        return sc2_env.SC2Env(map_name=map_name,
+        players = []
+
+        players.append(sc2_env.Agent(sc2_env.Race["random"],
+                               None))
+
+        players.append(sc2_env.Bot(sc2_env.Race["random"],
+                                 sc2_env.Difficulty["very_easy"],
+                                 sc2_env.BotBuild["random"]))
+        """
+        return sc2_env.SC2Env(map_name="Simple64",
+                              battle_net_map=False,
+                              players=players,
+                              agent_interface_format=sc2_env.parse_agent_interface_format(
+                                  feature_screen=84,
+                                  feature_minimap=64,
+                                  rgb_screen=None,
+                                  rgb_minimap=None,
+                                  action_space=None,
+                                  use_feature_units=False,
+                                  use_raw_units=False),
+                              step_mul=8,
+                              game_steps_per_episode=None,
+                              disable_fog=False,
+                              visualize=False)
+
+        """
+        return sc2_env.SC2Env(map_name="Simple64",
                               battle_net_map=FLAGS.battle_net_map,
                               players=players,
                               agent_interface_format=sc2_env.parse_agent_interface_format(
@@ -116,4 +137,4 @@ class PySC2Environment(py_environment.PyEnvironment):
                               step_mul=FLAGS.step_mul,
                               game_steps_per_episode=FLAGS.game_steps_per_episode,
                               disable_fog=FLAGS.disable_fog,
-                              visualize=visualize)
+                              visualize=False)
