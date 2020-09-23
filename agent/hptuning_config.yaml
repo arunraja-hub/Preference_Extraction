@@ -1,7 +1,7 @@
 trainingInput:
   hyperparameters:
     goal: MAXIMIZE
-    hyperparameterMetricTag: Metrics/AverageReturn
+    hyperparameterMetricTag: AverageReturn
     maxTrials: 2
     maxParallelTrials: 1
     params:

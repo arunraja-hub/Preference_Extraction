@@ -17,6 +17,7 @@ import gin
 import gin.tf
 from six.moves import range
 import tensorflow as tf
+import hypertune
 
 from tf_agents.agents.ppo import ppo_agent
 from tf_agents.agents.ppo import ppo_clip_agent
@@ -358,6 +359,14 @@ def train(
       for train_metric in train_metrics:
         train_metric.tf_summaries(
             train_step=global_step, step_metrics=train_metrics[:2])
+
+        hpt = hypertune.HyperTune()
+        hpt.report_hyperparameter_tuning_metric(
+            hyperparameter_metric_tag=train_metric.name,
+            metric_value=train_metric.result(),
+            global_step=global_step)
+
+        print("Reporting metric", train_metric.name, train_metric.result())
 
       if global_step.numpy() % train_checkpoint_interval == 0:
         train_checkpointer.save(global_step=global_step.numpy())
