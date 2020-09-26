@@ -25,6 +25,7 @@ import trainer
 
 flags.DEFINE_string('root_dir', os.getenv('TEST_UNDECLARED_OUTPUTS_DIR'),
                     'Root directory for writing logs/summaries/checkpoints.')
+flags.DEFINE_alias('job-dir', 'root_dir')
 flags.DEFINE_multi_string('gin_file', 'configs/ppo.gin',
                           'Paths to the study config files.')
 flags.DEFINE_multi_string('gin_bindings', None, 'Gin binding to pass through.')

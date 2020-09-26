@@ -1,0 +1,68 @@
+trainingInput:
+  hyperparameters:
+    goal: MAXIMIZE
+    hyperparameterMetricTag: AverageReturn
+    maxTrials: 50
+    maxParallelTrials: 5
+    params:
+      - parameterName: gin_bindings=DoomEnvironment.frame_skip
+        type: INTEGER
+        minValue: 2
+        maxValue: 6
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=trainer.train.train_sequence_length
+        type: INTEGER
+        minValue: 300
+        maxValue: 700
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf.compat.v1.train.AdamOptimizer.learning_rate
+        type: DOUBLE
+        minValue: 0.00001
+        maxValue: 0.01
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=ppo_kl_penalty_agent.PPOKLPenaltyAgent.adaptive_kl_target
+        type: DOUBLE
+        minValue: 0.001
+        maxValue: 0.1
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=ppo_kl_penalty_agent.PPOKLPenaltyAgent.num_epochs
+        type: INTEGER
+        minValue: 15
+        maxValue: 40
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=ppo_kl_penalty_agent.PPOKLPenaltyAgent.normalize_rewards
+        type: DISCRETE
+        discreteValues:
+        - 0
+        - 1
+
+      - parameterName: gin_bindings=actor_distribution_network.ActorDistributionNetwork.conv_layer_params
+        type: CATEGORICAL
+        categoricalValues:
+        - "[[16, 3, 2]]"
+        - "[[16, 3, 2], [32, 3, 2]]"
+        - "[[16, 3, 2], [32, 3, 2], [64, 3, 2]]"
+      - parameterName: gin_bindings=actor_distribution_network.ActorDistributionNetwork.fc_layer_params
+        type: CATEGORICAL
+        categoricalValues:
+        - "[32]"
+        - "[64]"
+        - "[64,32]"
+
+      - parameterName: gin_bindings=actor_distribution_network.ValueNetwork.conv_layer_params
+        type: CATEGORICAL
+        categoricalValues:
+        - "[[16, 3, 2]]"
+        - "[[16, 3, 2], [32, 3, 2]]"
+        - "[[16, 3, 2], [32, 3, 2], [64, 3, 2]]"
+      - parameterName: gin_bindings=actor_distribution_network.ValueNetwork.fc_layer_params
+        type: CATEGORICAL
+        categoricalValues:
+        - "[32]"
+        - "[64]"
+        - "[64,32]"

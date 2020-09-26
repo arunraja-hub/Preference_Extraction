@@ -1,4 +1,4 @@
-To run:
+# To run locally:
 
 `python train.py --root_dir some/dir`
 
@@ -12,3 +12,20 @@ You probably won't need to modify any of the training code, since it can all be 
 The training and environment parameters can be changed there. See https://github.com/google/gin-config to learn more.
 
 Also see https://www.tensorflow.org/agents
+
+# To launch on g cloud
+This process will download a few gigs the first time. It will be faster the next time.
+
+Follow instructions at the [Before you begin section](https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin).
+    
+    chmod +x launch_cloud.sh
+    ./launch_cloud.sh job_name
+
+If the dependencies change, you'll need to re push the base docker container. This will take a lot of time and you'll need to upload a few gigs.
+To re push the base docker image:
+
+Modify the DockerfileBase file.
+
+    BASE_IMAGE_URI=gcr.io/preference-extraction/pref_extract_base
+    docker build -f DockerfileBase -t $BASE_IMAGE_URI ./
+    docker push $BASE_IMAGE_URI
