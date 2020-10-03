@@ -1,4 +1,6 @@
 trainingInput:
+  scaleTier: CUSTOM
+  masterType: n1-highmem-4
   hyperparameters:
     goal: MAXIMIZE
     hyperparameterMetricTag: AverageReturn
@@ -40,9 +42,3 @@ trainingInput:
         categoricalValues:
         - "[[16, 3, 2]]"
         - "[[16, 3, 2], [32, 3, 2]]"
-
-      - parameterName: gin_bindings=NUM_TRAIN_ENVIRONMENTS
-        type: DISCRETE
-        discreteValues:
-        - 1
-        - 2

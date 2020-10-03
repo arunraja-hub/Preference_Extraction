@@ -30,7 +30,7 @@ trainer.train.collect_driver_class = \
 collect/dynamic_step_driver.DynamicStepDriver.num_steps = 1
 
 tf_uniform_replay_buffer.TFUniformReplayBuffer.batch_size = %NUM_TRAIN_ENVIRONMENTS
-tf_uniform_replay_buffer.TFUniformReplayBuffer.max_length = 20000  # The biggest replay buffer that can run on gcloud
+tf_uniform_replay_buffer.TFUniformReplayBuffer.max_length = 40000  # The biggest replay buffer that can run on gcloud
 tf_uniform_replay_buffer.TFUniformReplayBuffer.as_dataset.sample_batch_size = 64
 
 dqn_agent.DqnAgent.td_errors_loss_fn = @tf.losses.mean_squared_error
