@@ -34,7 +34,7 @@ tf_uniform_replay_buffer.TFUniformReplayBuffer.batch_size = %NUM_TRAIN_ENVIRONME
 tf_uniform_replay_buffer.TFUniformReplayBuffer.max_length = %REPLAY_BUFFER_CAPACITY
 
 ppo_kl_penalty_agent.PPOKLPenaltyAgent.optimizer = @critic/tf.train.AdamOptimizer()
-tf.compat.v1.train.AdamOptimizer.learning_rate = 1e-4
+critic/tf.train.AdamOptimizer.learning_rate = 1e-4
 actor_distribution_network.ActorDistributionNetwork.input_tensor_spec = (@environment_specs.observation_spec())
 actor_distribution_network.ActorDistributionNetwork.output_tensor_spec = (@environment_specs.action_spec())
 actor_distribution_network.ActorDistributionNetwork.conv_layer_params = %CONV_LAYER_PARAMS

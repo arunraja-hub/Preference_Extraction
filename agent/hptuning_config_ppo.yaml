@@ -17,7 +17,7 @@ trainingInput:
         maxValue: 700
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=tf.compat.v1.train.AdamOptimizer.learning_rate
+      - parameterName: gin_bindings=critic/tf.train.AdamOptimizer.learning_rate
         type: DOUBLE
         minValue: 0.00001
         maxValue: 0.01
