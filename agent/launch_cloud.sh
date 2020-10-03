@@ -29,7 +29,7 @@ then
     --master-image-uri $IMAGE_URI \
     --scale-tier BASIC \
     --job-dir $JOB_DIR \
-    --config hptuning_config.yaml
+    --config hptuning_config_ppo.yaml
 else
   gcloud beta ai-platform jobs submit training $JOB_NAME \
     --region us-central1 \

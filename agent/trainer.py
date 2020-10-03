@@ -179,9 +179,9 @@ def train(
           tf_metrics.NumberOfEpisodes(),
           tf_metrics.EnvironmentSteps(),
           tf_metrics.AverageReturnMetric(
-              batch_size=tf_env.batch_size),
+              batch_size=tf_env.batch_size, buffer_size=log_interval*tf_env.batch_size),
           tf_metrics.AverageEpisodeLengthMetric(
-              batch_size=tf_env.batch_size),
+              batch_size=tf_env.batch_size, buffer_size=log_interval*tf_env.batch_size),
       ]
     else:
       train_metrics = list(train_metrics)
