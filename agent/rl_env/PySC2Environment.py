@@ -23,6 +23,8 @@ from pysc2.env import sc2_env
 from pysc2.lib import point_flag
 from pysc2.lib import stopwatch
 
+from tf_agents.environments import utils
+
 # based on https://github.com/deepmind/pysc2/blob/master/pysc2/bin/agent.py and https://github.com/deepmind/pysc2/blob/master/pysc2/env/run_loop.py
 
 class PySC2Environment(py_environment.PyEnvironment):
@@ -97,6 +99,8 @@ class PySC2Environment(py_environment.PyEnvironment):
         flags.DEFINE_bool("battle_net_map", False, "Use the battle.net map version.")
         flags.mark_flag_as_required("map")
 
+        # hardcoding two players down below in the code
+
         players = []
 
         players.append(sc2_env.Agent(sc2_env.Race["random"],
@@ -105,24 +109,7 @@ class PySC2Environment(py_environment.PyEnvironment):
         players.append(sc2_env.Bot(sc2_env.Race["random"],
                                  sc2_env.Difficulty["very_easy"],
                                  sc2_env.BotBuild["random"]))
-        """
-        return sc2_env.SC2Env(map_name="Simple64",
-                              battle_net_map=False,
-                              players=players,
-                              agent_interface_format=sc2_env.parse_agent_interface_format(
-                                  feature_screen=84,
-                                  feature_minimap=64,
-                                  rgb_screen=None,
-                                  rgb_minimap=None,
-                                  action_space=None,
-                                  use_feature_units=False,
-                                  use_raw_units=False),
-                              step_mul=8,
-                              game_steps_per_episode=None,
-                              disable_fog=False,
-                              visualize=False)
 
-        """
         return sc2_env.SC2Env(map_name="Simple64",
                               battle_net_map=FLAGS.battle_net_map,
                               players=players,
@@ -138,3 +125,11 @@ class PySC2Environment(py_environment.PyEnvironment):
                               game_steps_per_episode=FLAGS.game_steps_per_episode,
                               disable_fog=FLAGS.disable_fog,
                               visualize=False)
+
+def main(argv):
+    # here is the test
+    environment = PySC2Environment()
+    utils.validate_py_environment(environment, episodes=3)
+
+if __name__ == '__main__':
+  app.run(main)
