@@ -35,10 +35,10 @@ class PySC2Environment(py_environment.PyEnvironment):
         self.env = self.setup_env()
 
     def action_spec(self):
-        return self.env.observation_spec()
+        return self.env.action_spec()
 
     def observation_spec(self):
-        return self.env.action_spec()
+        return self.env.observation_spec()
 
     def _reset(self):
         return self.env.reset()
