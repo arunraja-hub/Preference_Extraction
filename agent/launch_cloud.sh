@@ -38,7 +38,7 @@ then
 fi
 
 gcloud beta ai-platform jobs submit training $JOB_NAME \
-  --region asia-east1 \
+  --region us-west1 \
   --master-image-uri $IMAGE_URI \
   --job-dir $JOB_DIR \
   $CLOUD_CONFIG \
