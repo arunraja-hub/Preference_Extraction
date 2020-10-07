@@ -101,14 +101,19 @@ class PySC2Environment(py_environment.PyEnvironment):
 
         # hardcoding two players down below in the code
 
+        agent_classes = []
         players = []
 
-        players.append(sc2_env.Agent(sc2_env.Race["random"],
-                               None))
+        agent_module, agent_name = FLAGS.agent.rsplit(".", 1)
+        agent_cls = getattr(importlib.import_module(agent_module), agent_name)
+        agent_classes.append(agent_cls)
 
-        players.append(sc2_env.Bot(sc2_env.Race["random"],
-                                 sc2_env.Difficulty["very_easy"],
-                                 sc2_env.BotBuild["random"]))
+        players.append(sc2_env.Agent(sc2_env.Race[FLAGS.agent_race],
+                               FLAGS.agent_name or agent_name))
+
+        players.append(sc2_env.Bot(sc2_env.Race[FLAGS.agent2_race],
+                                 sc2_env.Difficulty[FLAGS.difficulty],
+                                 sc2_env.BotBuild[FLAGS.bot_build]))
 
         return sc2_env.SC2Env(map_name="Simple64",
                               battle_net_map=FLAGS.battle_net_map,
@@ -127,7 +132,7 @@ class PySC2Environment(py_environment.PyEnvironment):
                               visualize=False)
 
 def main(argv):
-    # here is the test
+    # here is the test for the TF-Agents wrapper
     environment = PySC2Environment()
     utils.validate_py_environment(environment, episodes=3)
 
