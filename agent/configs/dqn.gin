@@ -15,7 +15,11 @@ include 'configs/base.gin'
 AGENT_CLASS = @dqn_agent.DqnAgent
 ENV_LOAD_FN = @tf_agents_env_with_ammo
 ENV_NAME = '' # Change the environment used here.
-NUM_GLOBAL_STEPS = 250000
+NUM_GLOBAL_STEPS = 360000
+
+NUM_TRAIN_ENVIRONMENTS = 1
+CONV_LAYER_PARAMS = [[16, 3, 2]]  # Best found in ppo hparam search
+FC_LAYER_PARAMS = [64]  # Best found in ppo hparam search
 
 trainer.train.initial_collect_driver_class = \
     @initial_collect/dynamic_step_driver.DynamicStepDriver
@@ -26,7 +30,7 @@ trainer.train.collect_driver_class = \
 collect/dynamic_step_driver.DynamicStepDriver.num_steps = 1
 
 tf_uniform_replay_buffer.TFUniformReplayBuffer.batch_size = %NUM_TRAIN_ENVIRONMENTS
-tf_uniform_replay_buffer.TFUniformReplayBuffer.max_length = 100000
+tf_uniform_replay_buffer.TFUniformReplayBuffer.max_length = 40000  # The biggest replay buffer that can run on gcloud
 tf_uniform_replay_buffer.TFUniformReplayBuffer.as_dataset.sample_batch_size = 64
 
 dqn_agent.DqnAgent.td_errors_loss_fn = @tf.losses.mean_squared_error
@@ -45,4 +49,12 @@ critic/tf.train.AdamOptimizer.learning_rate = 1e-2
 dqn_agent.DqnAgent.q_network = @q_network.QNetwork()
 q_network.QNetwork.input_tensor_spec = @environment_specs.observation_spec()
 q_network.QNetwork.action_spec = @environment_specs.action_spec()
-q_network.QNetwork.fc_layer_params = (800,)
+q_network.QNetwork.conv_layer_params = %CONV_LAYER_PARAMS
+q_network.QNetwork.fc_layer_params = %FC_LAYER_PARAMS
+
+trainer.train.train_checkpoint_interval = 20000
+trainer.train.policy_checkpoint_interval = 20000
+trainer.train.rb_checkpoint_interval = 60000
+trainer.train.log_interval = 10000
+trainer.train.summary_interval = 10000
+trainer.train.summaries_flush_secs = 10

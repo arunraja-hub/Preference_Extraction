@@ -1,8 +1,9 @@
 # Usage:
 # Follow instructions at the Before you begin section of https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin
 # chmod +x launch_cloud.sh
-# ./launch_cloud.sh job_name 0
-# ./launch_cloud.sh job_name 1 for hparam tune.
+# ./launch_cloud.sh job_name dqn 0
+# ./launch_cloud.sh job_name dqn 1
+# for hparam tune.
 
 # This launches a new training on google cloud.
 # If you want to do something else, you can use these commands as examples.
@@ -22,21 +23,26 @@ echo "docker run $IMAGE_URI --job-dir ~/pref_ext_train/$JOB_NAME"
 echo "Pushing and launching"
 docker push $IMAGE_URI
 
-if [ $2 -eq 1 ]
+if [ $2 = "dqn" ]
 then
-  gcloud beta ai-platform jobs submit training $JOB_NAME \
-    --region us-central1 \
-    --master-image-uri $IMAGE_URI \
-    --scale-tier BASIC \
-    --job-dir $JOB_DIR \
-    --config hptuning_config.yaml
+  GIN_CONFIG="--gin_file configs/dqn.gin"
+  CLOUD_CONFIG="--config hptuning_config_dqn.yaml"
 else
-  gcloud beta ai-platform jobs submit training $JOB_NAME \
-    --region us-central1 \
-    --master-image-uri $IMAGE_URI \
-    --scale-tier BASIC \
-    --job-dir $JOB_DIR
+  GIN_CONFIG="--gin_file configs/ppo.gin"
+  CLOUD_CONFIG="--config hptuning_config_ppo.yaml"
 fi
+
+if [ $3 -eq 0 ]
+then
+  CLOUD_CONFIG=""
+fi
+
+gcloud beta ai-platform jobs submit training $JOB_NAME \
+  --region us-west1 \
+  --master-image-uri $IMAGE_URI \
+  --job-dir $JOB_DIR \
+  $CLOUD_CONFIG \
+  -- $GIN_CONFIG
 
 echo "See the job training here: https://console.cloud.google.com/ai-platform/jobs?authuser=1&project=preference-extraction"
 
