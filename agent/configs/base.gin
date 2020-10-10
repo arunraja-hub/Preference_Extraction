@@ -26,6 +26,10 @@ evaluator.Evaluator.watch_until.max_num_global_steps = %NUM_GLOBAL_STEPS
 # Wait max 1 hour for checkpoints to prevent hangs.
 evaluator.Evaluator.watch_until.checkpoint_timeout_secs = 3600
 
+exporter.Exporter.agent_class = %AGENT_CLASS
+exporter.Exporter.env_name = %ENV_NAME
+exporter.Exporter.env_load_fn = %ENV_LOAD_FN
+
 DoomEnvironment.config_name = 'rl_env/custom.cfg'
 DoomEnvironment.frame_skip = 4
 DoomEnvironment.obs_shape = (60, 100)
