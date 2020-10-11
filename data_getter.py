@@ -1,28 +1,24 @@
-import concurrent.futures
-import itertools
 import os
 import pickle
 import random
 import sys
 import time
-import numpy as np
-import matplotlib.pyplot as plt
-import numpy as np
-import PIL
-from PIL import Image
+import io
+import collections
+import concurrent.futures
+import itertools
+
+import urllib.request
 import scipy
+import PIL
+import numpy as np
+
+from urllib.error import HTTPError
+from PIL import Image
 from scipy import ndimage
 from sklearn import metrics
 from sklearn.utils import shuffle
-import io
-import collections
-
-import urllib.request
-from urllib.error import HTTPError
-
-#!git clone https://github.com/arunraja-hub/Preference_Extraction.git
-
-# @title Hacks to make pickle work.
+from tensorflow.python.lib.io import file_io
 
 class Trajectory(
     collections.namedtuple('Trajectory', [
@@ -34,34 +30,30 @@ class Trajectory(
         'reward',
         'discount',
     ])):
-  """Stores the observation the agent saw and the action it took.
-      The rest of the attributes aren't used in this code."""
-  __slots__ = ()
+    """Stores the observation the agent saw and the action it took.
+    The rest of the attributes aren't used in this code."""
+    __slots__ = ()
 
 class ListWrapper(object):
-  def __init__(self, list_to_wrap):
-    self._list = list_to_wrap
-
-  def as_list(self):
-    return self._list
+    def __init__(self, list_to_wrap):
+        self._list = list_to_wrap
+        
+    def as_list(self):
+        return self._list
 
 class RenameUnpickler(pickle.Unpickler):
     def find_class(self, module, name):
-      if name == "Trajectory":
-        return Trajectory
-      if name == "ListWrapper":
-        return ListWrapper
+        if name == "Trajectory":
+            return Trajectory
+        if name == "ListWrapper":
+            return ListWrapper
 
-      return super(RenameUnpickler, self).find_class(module, name)
+        return super(RenameUnpickler, self).find_class(module, name)
 
 def rename_load(s):
     """Helper function analogous to pickle.loads()."""
     return RenameUnpickler(s, encoding='latin1').load()
 
-
-# @title Load all of the data
-# If this takes more than a minute, stop and restart it.
-# TODO: figure out why this cell always hangs the first time it's run.
 
 def load_file(full_path):
     try:
@@ -71,7 +63,7 @@ def load_file(full_path):
     except:
         return None
     
-def all_load_data(base_path):
+def get_data_from_folder(base_path):
     
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=100)
     
@@ -89,4 +81,8 @@ def all_load_data(base_path):
     
     return raw_data
 
-#all_raw_data = all_load_data("Preference_Extraction/data/simple_env_1/")
+def get_data_from_gcp(data_path):
+    with file_io.FileIO(data_path, mode='rb') as fIn:
+        data = pickle.load(fIn)
+    return data
+
