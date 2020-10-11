@@ -1,14 +1,20 @@
 import os
 import numpy as np
+import collections
+import pickle
 
 import gin
 import tensorflow as tf
-
+from tensorflow.python.lib.io import file_io
+        
 from tf_agents.environments import py_environment
 from tf_agents.environments import suite_gym
 from tf_agents.environments import tf_py_environment
 from tf_agents.agents.dqn.dqn_agent import DqnAgent
 from tf_agents.agents.ppo.ppo_kl_penalty_agent import PPOKLPenaltyAgent
+from tqdm import tqdm
+        
+from rl_env.DoomEnvironment import DoomEnvironment
 import environment_specs
 
 
@@ -31,7 +37,22 @@ def flatten_model(model_nested):
     model_flat = tf.keras.models.Sequential(get_layers(model_nested.layers))
     
     return model_flat
-    
+
+
+class Trajectory(
+    collections.namedtuple('Trajectory', [
+        'step_type',
+        'observation',
+        'action',
+        'policy_info',
+        'next_step_type',
+        'reward',
+        'discount',
+    ])):
+  """Stores the observation the agent saw, the action it took
+  and preference labels, if specified"""
+  __slots__ = ()
+
 @gin.configurable
 class Exporter(object):
     
@@ -41,18 +62,19 @@ class Exporter(object):
                  env_load_fn=suite_gym.load, 
                  env_name='CartPole-v0', 
                  agent_class=None,
+                 collect_data=0,
                  verify_restore_success=True):
         
         if not agent_class:
             raise ValueError('The `agent_class` parameter of Exporter must be set.')
         
-        env = env_load_fn(env_name)
+        self.env = env_load_fn(env_name)
         
-        if isinstance(env, py_environment.PyEnvironment):
-            self._tf_env = tf_py_environment.TFPyEnvironment(env)
-            self._py_env = env
+        if isinstance(self.env, py_environment.PyEnvironment):
+            self._tf_env = tf_py_environment.TFPyEnvironment(self.env)
+            self._py_env = self.env
         else:
-            self._tf_env = env
+            self._tf_env = self.env
             self._py_env = None  # Can't generically convert to PyEnvironment.
         
         
@@ -68,6 +90,7 @@ class Exporter(object):
         checkpoint_paths = list(checkpoint_state.all_model_checkpoint_paths)
         if checkpoint_no is None:
             checkpoint = checkpoint_paths[-1]
+            checkpoint_no = 'last'
         else:
             checkpoint = [x for x in checkpoint_paths if str(checkpoint_no) in x][0]
         
@@ -85,6 +108,55 @@ class Exporter(object):
         elif isinstance(self._agent, PPOKLPenaltyAgent):
             model = flatten_model(self._agent.actor_net)
         
-        model.build(input_shape=(1,) + env._observation_spec.shape)
+        input_shape = self.env._observation_spec.shape
+        model.build(input_shape= (1,) + input_shape)
+        model._set_inputs(tf.keras.Input(shape=input_shape))
         model.summary()
-        model.save(os.path.join(root_dir, 'saved_model'))
+        model_dir = os.path.join(root_dir, f'saved_model_cp_{checkpoint_no}')
+        model.save(model_dir)
+        
+        if collect_data > 0:
+            self.generate_experience_data(steps=collect_data, save_dir=root_dir)
+   
+    def generate_experience_data(self, steps, save_dir):
+        
+        time_step = self._tf_env.reset()
+        observations = []
+        actions = []
+        labels = []
+        
+        for _ in tqdm(range(steps), 'Generating experience data'):
+            action = self._agent.policy.action(time_step).action
+            time_step = self._tf_env.step(action=action)
+            
+            label = {}
+            if isinstance(self.env._env, DoomEnvironment):            
+                state = self._tf_env.envs[0]._game.get_state()
+                self._tf_env.envs[0]._game.advance_action()
+                if state is not None:
+                    deamons = [lbl for lbl in state.labels if lbl.object_name == 'Demon']
+                    if len(deamons) > 0:
+                        label['object_angle'] = int(deamons[0].object_angle)
+                        label['distance_from_wall'] = abs(deamons[0].object_position_x)
+
+            observations.append(time_step.observation)
+            actions.append(action.numpy()[0])
+            labels.append(label)
+            
+        observations = np.array([ob.numpy()[0] for ob in observations])
+        actions = np.array(actions)
+        labels = np.array(labels)
+
+        exp_data = Trajectory(
+            observation=observations,
+            action=actions,
+            policy_info={'satisfaction': labels},
+            step_type=(),
+            next_step_type=(),
+            reward=(),
+            discount=())
+        
+        file_path = os.path.join(save_dir, f'exp_data_{steps}.pkl')
+        with file_io.FileIO(file_path, mode='wb') as f:
+            pickle.dump([exp_data], f)
+        
