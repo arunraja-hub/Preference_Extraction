@@ -19,20 +19,8 @@ from scipy import ndimage
 from sklearn import metrics
 from sklearn.utils import shuffle
 from tensorflow.python.lib.io import file_io
+from tf_agents.trajectories.trajectory import Trajectory
 
-class Trajectory(
-    collections.namedtuple('Trajectory', [
-        'step_type',
-        'observation',
-        'action',
-        'policy_info',
-        'next_step_type',
-        'reward',
-        'discount',
-    ])):
-    """Stores the observation the agent saw and the action it took.
-    The rest of the attributes aren't used in this code."""
-    __slots__ = ()
 
 class ListWrapper(object):
     def __init__(self, list_to_wrap):
