@@ -5,7 +5,7 @@ import tf_agents.drivers.dynamic_episode_driver
 import tf_agents.replay_buffers.tf_uniform_replay_buffer
 import gin
 import trainer
-import rl_env.DoomEnviroment
+import rl_env.DoomEnvironment
 
 include 'configs/base.gin'
 

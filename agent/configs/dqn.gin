@@ -6,7 +6,7 @@ import tf_agents.environments.suite_gym
 import tf_agents.networks.q_network
 import trainer
 import tf_agents.replay_buffers.tf_uniform_replay_buffer
-import rl_env.DoomEnviroment
+import rl_env.DoomEnvironment
 
 import gin
 

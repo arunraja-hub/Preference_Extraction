@@ -29,3 +29,12 @@ Modify the DockerfileBase file.
     BASE_IMAGE_URI=gcr.io/preference-extraction/pref_extract_base
     docker build -f DockerfileBase -t $BASE_IMAGE_URI ./
     docker push $BASE_IMAGE_URI
+
+# To export and agent (locally)
+
+`python export.py --root_dir some/dir --gin_file some/gin/config/file`
+
+Additional options
+
+* `--checkpoint` - Checkpoint at which export agent
+* `--collect_data` - Number of experience data points to collect using this agent
