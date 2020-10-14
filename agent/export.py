@@ -15,7 +15,7 @@ flags.DEFINE_string('root_dir', os.getenv('TEST_UNDECLARED_OUTPUTS_DIR'),
                     'Root directory for reading logs/summaries/checkpoints.')
 flags.DEFINE_multi_string('gin_file', "", 'Paths to the study config files.')
 flags.DEFINE_string('checkpoint', None, 'Checkpoint at which export agent')
-flags.DEFINE_string('collect_data', None, 'Number of experience data points to collect')
+flags.DEFINE_integer('collect_data', 0, 'Number of experience data points to collect')
 FLAGS = flags.FLAGS
 
 def main(_):
@@ -29,10 +29,6 @@ def main(_):
     root_dir = FLAGS.root_dir
     checkpoint_no = FLAGS.checkpoint
     collect_data = FLAGS.collect_data
-    if collect_data is None:
-        collect_data = 0
-    else:
-        collect_data = int(collect_data)
     
     with gin.unlock_config():
         gin.bind_parameter('%ROOT_DIR', root_dir)

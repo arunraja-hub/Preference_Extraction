@@ -12,6 +12,7 @@ from tf_agents.environments import suite_gym
 from tf_agents.environments import tf_py_environment
 from tf_agents.agents.dqn.dqn_agent import DqnAgent
 from tf_agents.agents.ppo.ppo_kl_penalty_agent import PPOKLPenaltyAgent
+from tf_agents.trajectories.trajectory import Trajectory
 from tqdm import tqdm
         
 from rl_env.DoomEnvironment import DoomEnvironment
@@ -22,7 +23,9 @@ def extract_weights_sample(agent, agent_class):
     if isinstance(agent, DqnAgent):
         return agent._q_network.layers[0].layers[0].get_weights()[0].copy()
     elif isinstance(agent, PPOKLPenaltyAgent):
-        return agent.actor_net.layers[0].layers[0].get_weights()[0].copy()
+        return np.array([
+            agent._actor_net.layers[0].layers[0].get_weights()[0].copy(),
+            agent._value_net.layers[0].layers[0].get_weights()[0].copy()])
 
 def flatten_model(model_nested):
     def get_layers(layers):
@@ -37,21 +40,6 @@ def flatten_model(model_nested):
     model_flat = tf.keras.models.Sequential(get_layers(model_nested.layers))
     
     return model_flat
-
-
-class Trajectory(
-    collections.namedtuple('Trajectory', [
-        'step_type',
-        'observation',
-        'action',
-        'policy_info',
-        'next_step_type',
-        'reward',
-        'discount',
-    ])):
-  """Stores the observation the agent saw, the action it took
-  and preference labels, if specified"""
-  __slots__ = ()
 
 @gin.configurable
 class Exporter(object):
