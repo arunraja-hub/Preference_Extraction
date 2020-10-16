@@ -16,6 +16,7 @@ from data_getter import get_data_from_gcp, get_data_from_folder
 from data_processing import transform_to_x_y, rebalance_data_to_minority_class
 
 from extractors.tf_extractor import TfExtractor
+from extractors.torch_extractor import TorchExtractor
 
 sys.path.append('agent')
 
@@ -52,8 +53,8 @@ def main(_):
         gin.bind_parameter('%AGENT_DIR', agent_path)
         gin.bind_parameter('%INPUT_SHAPE', xs.shape)
     
-    extractor = TfExtractor()
-    extractor.train(xs, ys)
+    extractor = TorchExtractor()
+    #extractor.train(xs, ys)
 
 
 if __name__ == '__main__':

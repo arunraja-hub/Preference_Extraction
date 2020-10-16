@@ -9,6 +9,9 @@ import numpy as np
 from sklearn import metrics
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 
+import gin
+import tensorflow as tf
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -99,7 +102,9 @@ class SupermaskLinear(nn.Linear):
 class TorchExtractor(object):
     
     def __init__(self,
-                 extractor_fn,
+                 agent_path,
+                 input_shape,
+                 subnet_k,
                  num_train,
                  num_val,
                  num_repeat = 5,
@@ -108,7 +113,6 @@ class TorchExtractor(object):
                  learning_rate = 1e-2,
                  weight_decay = 0):
         
-        self.extractor_fn = extractor_fn
         self.num_train = num_train
         self.num_val = num_val
         self.num_repeat = num_repeat
@@ -116,7 +120,37 @@ class TorchExtractor(object):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
+        
+        self.create_agent_model(agent_path, input_shape, subnet_k)
 
+    
+    def create_agent_model(self, agent_path, input_shape, subnet_k):
+        
+        agent = tf.keras.models.load_model(agent_path)
+
+        torch_layers = []
+        last_shape = input_shape
+        for ix, layer in enumerate(agent.layers):
+            if isinstance(layer, tf.keras.layers.Conv2D):
+                torch_layer = SupermaskConv(in_channels=last_shape[-1], out_channels=layer.filters,
+                                            kernel_size=layer.kernel_size, stride=layer.strides, bias=True, k=subnet_k)
+                torch_layers.append(torch_layer)
+                last_shape = layer.weights[0].shape
+            elif isinstance(layer, tf.keras.layers.Flatten):
+                torch_layers.append(nn.Flatten())
+                if ix == 0:  # first flatten layer does not use batch size
+                    last_shape = [np.prod(last_shape[1:])]
+                else:
+                    last_shape = [np.prod(last_shape)]
+            elif isinstance(layer, tf.keras.layers.Dense):
+                torch_layer = SupermaskLinear(in_features=last_shape[-1], out_features=layer.weights[0].shape[-1],
+                                              bias=True, k=subnet_k)
+                last_shape = layer.weights[0].shape
+                torch_layers.append(torch_layer)
+        
+        torch_model = nn.ModuleList(torch_layers)
+        print(torch_model)
+            
     """
        Train/Test function for Randomly Weighted Hidden Neural Networks Techniques
        Adapted from https://github.com/NesterukSergey/hidden-networks/blob/master/demos/mnist.ipynb
@@ -210,7 +244,7 @@ class TorchExtractor(object):
             if verbose:
                 print('Epoch - ', epoch)
                 print('Train metrics: loss', train_loss, 'accuracy', train_accuracy, 'auc', train_auc)
-                 print('Val metrics: loss', test_loss, 'accuracy', test_accuracy, 'auc', test_auc)
+                print('Val metrics: loss', test_loss, 'accuracy', test_accuracy, 'auc', test_auc)
 
             train_losses.append(train_loss)
             test_losses.append(test_loss)
@@ -240,4 +274,4 @@ class TorchExtractor(object):
                 else:
                     averaged_results[res].append(results[res][-1])         
     
-    return {x: sum(averaged_results[x]) / self.num_run for x in averaged_results}
+        return {x: sum(averaged_results[x]) / self.num_run for x in averaged_results}

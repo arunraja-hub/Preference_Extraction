@@ -1,5 +1,6 @@
 #-*-Python-*-
 import tf_extractor
+import torch_extractor
 
 AGENT_DIR = None
 INPUT_SHAPE = None
@@ -23,3 +24,14 @@ TfExtractor.num_repeat = 2
 TfExtractor.epochs = 50
 TfExtractor.batch_size = 16
 TfExtractor.slowly_unfreezing = False
+
+TorchExtractor.agent_path = %AGENT_DIR
+TorchExtractor.input_shape = %INPUT_SHAPE
+TorchExtractor.subnet_k = 0.1
+TorchExtractor.num_train = 50
+TorchExtractor.num_val = 100
+TorchExtractor.num_repeat = 2
+TorchExtractor.epochs = 50
+TorchExtractor.batch_size = 16
+TorchExtractor.learning_rate = 1e-2
+TorchExtractor.weight_decay = 0
