@@ -35,11 +35,6 @@ def data_pipeline(data_path, env='doom', rebalance=True):
         xs, ys = rebalance_data_to_minority_class(xs, ys)
     
     return xs, ys
-
-def agent_pipeline(agent_path):
-    model = tf.keras.models.load_model(agent_path)
-    model.summary()
-    
     
 def main(_):
     logging.set_verbosity(logging.INFO)
@@ -51,10 +46,11 @@ def main(_):
     exp_data_path = FLAGS.data_path
     agent_path = FLAGS.agent_path
     
-    gin.finalize()
-    
     xs, ys = data_pipeline(exp_data_path)
-    agent_pipeline(agent_path)
+    
+    with gin.unlock_config():
+        gin.bind_parameter('%AGENT_DIR', agent_path)
+        gin.bind_parameter('%INPUT_SHAPE', xs.shape)
     
     extractor = TfExtractor()
     extractor.train(xs, ys)

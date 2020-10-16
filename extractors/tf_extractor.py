@@ -54,11 +54,12 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
             self.model.layers[0].trainable = True
 
 @gin.configurable
-def cnn_from_obs(input_shape, reg_amount = .2, drop_rate = .2):
+def cnn_from_obs(input_shape, reg_amount, drop_rate):
     """
        Simple Convolutional Neural Network
        that extracts preferences from observations
     """
+
     model = tf.keras.models.Sequential([
         # This layer gets one of the color channels. It works better than using all of them.
         tf.keras.layers.Lambda(lambda x:  tf.expand_dims(x[:,:,:,tf.random.uniform((), 0,4, tf.int32)], 3),
@@ -76,7 +77,49 @@ def cnn_from_obs(input_shape, reg_amount = .2, drop_rate = .2):
                   metrics=['accuracy', tf.keras.metrics.AUC()])
 
     return model
+
+def reset_model_weights(model):    
+    for keras_layer in model.layers:
+        initializer = tf.keras.initializers.VarianceScaling(
+            scale=1.0, mode="fan_in", distribution="truncated_normal", seed=None)
+        if len(keras_layer.weights) > 0:
+            weights = initializer(shape=keras_layer.weights[0].shape)
+            biases = initializer(shape=keras_layer.weights[1].shape)
+            keras_layer.set_weights([weights, biases])
+
+@gin.configurable            
+def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, 
+                    layer_sizes, reg_amount, drop_rate, randomize_weights):
+    """
+        Builds a network to extract preferences
+        From the RL agent originally trained in the enviroment
+    """
+    agent = tf.keras.models.load_model(agent_path)
+    layers = []
+    for ix, layer_size in enumerate(layer_sizes):
+        layers.append(tf.keras.layers.Dense(layer_size, activation='relu',
+                       kernel_regularizer=tf.keras.regularizers.l2(reg_amount), name='post_agent_{}'.format(ix)))
+        if drop_rate > 0:
+            layers.append(tf.keras.layers.Dropout(drop_rate))
             
+    for ix, _ in enumerate(agent.layers[:agent_last_layer]):
+        if ix in agent_freezed_layers:
+            agent.layers[ix].trainable = False
+        else:
+            agent.layers[ix].trainable = True
+    
+    model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers + [
+        tf.keras.layers.Dense(1, activation='sigmoid', 
+        kernel_regularizer=tf.keras.regularizers.l2(reg_amount), name='output')])
+    
+    model.compile(optimizer=tf.keras.optimizers.Adam(.01), loss='binary_crossentropy',
+                  metrics=['accuracy', tf.keras.metrics.AUC()])
+    
+    if randomize_weights:
+        reset_model_weights(model)
+    
+    return model
+
 @gin.configurable
 class TfExtractor(object):
     
@@ -97,7 +140,7 @@ class TfExtractor(object):
         self.batch_size = batch_size
         self.slowly_unfreezing = slowly_unfreezing
         
-    def train_best_logs(self, xs, ys, do_summary=True, verbose=False):
+    def train_best_logs(self, xs, ys, do_summary=True):
         """
             Trains the model and retruns the logs of the best epoch.
             Randomly splits the train and val data before training.
@@ -109,15 +152,15 @@ class TfExtractor(object):
         xs_val = xs[self.num_train:self.num_train+self.num_val]
         ys_val = ys[self.num_train:self.num_train+self.num_val]
         
-        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=verbose)
+        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=0)
         best_stats = BestStats()
         callbacks = [early_stopping, best_stats]
         if self.slowly_unfreezing:
             callbacks += [SlowlyUnfreezing()]
-            
-        model = self.extractor_fn(xs.shape)
+
+        model = self.extractor_fn()
         model.fit(xs[:self.num_train], ys[:self.num_train], epochs=self.epochs, batch_size=self.batch_size,
-                  validation_freq=10, callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=verbose)
+                  callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
 
         if do_summary:
             model.summary()
