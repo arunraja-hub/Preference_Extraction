@@ -218,6 +218,9 @@ class TorchExtractor(object):
             if len(tf_out.shape) > 2:
                 tf_out = np.rollaxis(tf_out, 3, 1)            
             np.testing.assert_allclose(torch_out, tf_out, rtol=.1, atol=5)
+            # This testing values are relatively close, but I cannot satify anything tighter
+            # Why are torch activations so 'relatively' different from tf ones
+            # TODO: investigate if there is something missing in the tf-torch translation
         
         for _ in range(50):
             random_obs = np.random.random(size=(1,) + input_shape)
