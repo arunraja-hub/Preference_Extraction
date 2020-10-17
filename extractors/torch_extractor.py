@@ -107,16 +107,25 @@ class AgentModel(nn.Module):
         super().__init__()
         self.module_list = nn.ModuleList(layers)
 
-    def load_agent_weigths(self, agent):
+    def load_agent_weigths(self, agent, device):
         for ix, layer in enumerate(agent.layers):
+            if ix == 0: # Input Layer in Keras
+                continue
             if len(layer.weights) > 0:
-                self.module_list[ix].weight.data = torch.from_numpy(np.transpose(layer.weights[0].numpy()))
-                self.module_list[ix].bias.data = torch.from_numpy(layer.weights[1].numpy())
-
+                self.module_list[ix-1].weight.data = torch.Tensor(np.transpose(layer.weights[0].numpy()))
+                self.module_list[ix-1].bias.data = torch.Tensor(layer.weights[1].numpy())
+                
+        self.module_list.to(device)
+            
     def forward(self, x):
-        for f in self.module_list:
+        for ix, f in enumerate(self.module_list):
             x = f(x)
-        x = torch.sigmoid(x)
+            if ix < len(self.module_list) - 2:
+                # EcondingNetwork of both PPO and DQN uses ReLU for both Conv and Dense layers
+                # Last layer is usually action logits or values and does not uses ReLUs
+                x = nn.functional.relu(x) 
+            elif ix == len(self.module_list) - 1:
+                x = torch.sigmoid(x) # Extractor layer uses sigmoid
         return x.flatten()
     
 @gin.configurable
@@ -142,23 +151,26 @@ class TorchExtractor(object):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
-        
-        self.model = None
-        self.create_agent_model(agent_path, input_shape, subnet_k, randomize_weights)
-        
+                
         np.random.seed(0)
         torch.manual_seed(0)
+        torch.set_printoptions(precision=8)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
-    
+        
+        self.model = None
+        self.create_agent_model(agent_path, input_shape, subnet_k, randomize_weights)
+        
     def create_agent_model(self, agent_path, input_shape, subnet_k, randomize_weights):
         
         agent = tf.keras.models.load_model(agent_path)
         x = tf.keras.Input(shape=input_shape)
         agent_submodel = tf.keras.Model(inputs=[x], outputs=agent.call(x))
         agent_submodel.summary()
+        for ix, layer in enumerate(agent.layers):  # Make sure agent and agent_subnet has same weights
+            agent_submodel.layers[ix+1].set_weights(layer.get_weights())
         
         torch_layers = []
         for ix, layer in enumerate(agent_submodel.layers):
@@ -180,14 +192,45 @@ class TorchExtractor(object):
                                               bias=True, k=subnet_k)
                 torch_layers.append(torch_layer)            
                 last_shape = layer.output_shape
-        
+                
+                
         torch_layers.append(nn.Linear(in_features=last_shape[-1], out_features=1, bias=True)) # last layer to transform output
         self.model = AgentModel(torch_layers)
         torchsummary.summary(self.model, input_size=(input_shape[-1], input_shape[0], input_shape[1])) # torch wants chanell first
         
         if not randomize_weights:
-            self.model.load_agent_weigths(agent)
+            self.model.load_agent_weigths(agent_submodel, self.device)
+            self.verify_weights(agent_submodel, agent, input_shape)
+            
+    def verify_weights(self, agent_submodel, agent, input_shape):
+        """
+            Method to verify correctness of agent_sumodel weigths
+            And of new torch network weigths
+        """
+        def check_same(torch_layers, tf_layer):
+            x = random_obs_torch
+            for lx, f in enumerate(torch_layers):
+                x = f(x)
+                if lx < len(self.model.module_list) - 2:
+                    x = nn.functional.relu(x)
+            torch_out = x.detach().cpu().numpy()
+            tf_out = tf_layer(random_obs).numpy()
+            if len(tf_out.shape) > 2:
+                tf_out = np.rollaxis(tf_out, 3, 1)            
+            np.testing.assert_allclose(torch_out, tf_out, rtol=.1, atol=5)
+        
+        for _ in range(50):
+            random_obs = np.random.random(size=(1,) + input_shape)
+            random_obs_torch = torch.Tensor(np.rollaxis(random_obs, 3, 1))  # torch wants channel first
 
+            assert (agent_submodel(random_obs).numpy() == agent(random_obs).numpy()).all()
+
+            for ix, layer in enumerate(agent_submodel.layers):
+                if ix == 0:
+                    continue
+                tf_sub_model = tf.keras.models.Model(inputs=agent_submodel.input, outputs=layer.output)
+                check_same(self.model.module_list[:ix], tf_sub_model)        
+    
     """
        Train/Test function for Randomly Weighted Hidden Neural Networks Techniques
        Adapted from https://github.com/NesterukSergey/hidden-networks/blob/master/demos/mnist.ipynb
@@ -281,8 +324,9 @@ class TorchExtractor(object):
 
         best_test_loss = np.inf
         test_loss_up_since = 0
-        early_stop = 100
-        verbose = True
+        early_stop = 50
+        verbose = False
+        
         for epoch in range(self.epochs):
             train_loss, train_accuracy, train_auc = self._train(tr_data_loader, optimizer, criterion)
             test_loss, test_accuracy, test_auc = self._test(val_data_loader, criterion)

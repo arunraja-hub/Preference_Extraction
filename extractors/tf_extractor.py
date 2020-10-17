@@ -152,7 +152,7 @@ class TfExtractor(object):
         xs_val = xs[self.num_train:self.num_train+self.num_val]
         ys_val = ys[self.num_train:self.num_train+self.num_val]
         
-        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=0)
+        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0)
         best_stats = BestStats()
         callbacks = [early_stopping, best_stats]
         if self.slowly_unfreezing:
