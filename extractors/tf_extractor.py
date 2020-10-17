@@ -63,7 +63,7 @@ def cnn_from_obs(input_shape, reg_amount, drop_rate):
     model = tf.keras.models.Sequential([
         # This layer gets one of the color channels. It works better than using all of them.
         tf.keras.layers.Lambda(lambda x:  tf.expand_dims(x[:,:,:,tf.random.uniform((), 0,4, tf.int32)], 3),
-                               input_shape=input_shape[1:]),
+                               input_shape=input_shape),
         tf.keras.layers.Conv2D(64, 2, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(reg_amount)),
         tf.keras.layers.Conv2D(32, 1, activation='relu', strides=1,
                                kernel_regularizer=tf.keras.regularizers.l2(reg_amount)),

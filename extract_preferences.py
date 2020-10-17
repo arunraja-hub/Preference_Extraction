@@ -51,10 +51,10 @@ def main(_):
     
     with gin.unlock_config():
         gin.bind_parameter('%AGENT_DIR', agent_path)
-        gin.bind_parameter('%INPUT_SHAPE', xs.shape)
+        gin.bind_parameter('%INPUT_SHAPE', xs.shape[1:])
     
     extractor = TorchExtractor()
-    #extractor.train(xs, ys)
+    extractor.train(xs, ys)
 
 
 if __name__ == '__main__':

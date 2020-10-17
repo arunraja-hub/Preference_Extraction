@@ -1,7 +1,4 @@
 #-*-Python-*-
-import tf_extractor
-import torch_extractor
-
 AGENT_DIR = None
 INPUT_SHAPE = None
 TfExtractor.extractor_fn = @agent_extractor
@@ -28,6 +25,7 @@ TfExtractor.slowly_unfreezing = False
 TorchExtractor.agent_path = %AGENT_DIR
 TorchExtractor.input_shape = %INPUT_SHAPE
 TorchExtractor.subnet_k = 0.1
+TorchExtractor.randomize_weights = False
 TorchExtractor.num_train = 50
 TorchExtractor.num_val = 100
 TorchExtractor.num_repeat = 2

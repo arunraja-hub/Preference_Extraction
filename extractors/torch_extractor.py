@@ -8,6 +8,7 @@ import itertools
 import numpy as np
 from sklearn import metrics
 from sklearn.metrics import roc_curve, auc, roc_auc_score
+from sklearn.utils import shuffle
 
 import gin
 import tensorflow as tf
@@ -16,7 +17,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.autograd as autograd
+import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
+import torchsummary
+
 
 class GetSubnet(autograd.Function):
     """
@@ -98,6 +102,23 @@ class SupermaskLinear(nn.Linear):
         return F.linear(x, w, self.bias)
         return x
 
+class AgentModel(nn.Module):
+    def __init__(self, layers):
+        super().__init__()
+        self.module_list = nn.ModuleList(layers)
+
+    def load_agent_weigths(self, agent):
+        for ix, layer in enumerate(agent.layers):
+            if len(layer.weights) > 0:
+                self.module_list[ix].weight.data = torch.from_numpy(np.transpose(layer.weights[0].numpy()))
+                self.module_list[ix].bias.data = torch.from_numpy(layer.weights[1].numpy())
+
+    def forward(self, x):
+        for f in self.module_list:
+            x = f(x)
+        x = torch.sigmoid(x)
+        return x.flatten()
+    
 @gin.configurable
 class TorchExtractor(object):
     
@@ -105,6 +126,7 @@ class TorchExtractor(object):
                  agent_path,
                  input_shape,
                  subnet_k,
+                 randomize_weights,
                  num_train,
                  num_val,
                  num_repeat = 5,
@@ -121,36 +143,51 @@ class TorchExtractor(object):
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         
-        self.create_agent_model(agent_path, input_shape, subnet_k)
-
+        self.model = None
+        self.create_agent_model(agent_path, input_shape, subnet_k, randomize_weights)
+        
+        np.random.seed(0)
+        torch.manual_seed(0)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        use_cuda = torch.cuda.is_available()
+        self.device = torch.device("cuda" if use_cuda else "cpu")
     
-    def create_agent_model(self, agent_path, input_shape, subnet_k):
+    def create_agent_model(self, agent_path, input_shape, subnet_k, randomize_weights):
         
         agent = tf.keras.models.load_model(agent_path)
-
+        x = tf.keras.Input(shape=input_shape)
+        agent_submodel = tf.keras.Model(inputs=[x], outputs=agent.call(x))
+        agent_submodel.summary()
+        
         torch_layers = []
-        last_shape = input_shape
-        for ix, layer in enumerate(agent.layers):
-            if isinstance(layer, tf.keras.layers.Conv2D):
+        for ix, layer in enumerate(agent_submodel.layers):
+            if isinstance(layer, tf.keras.layers.InputLayer):
+                last_shape = layer.output_shape[0]
+            
+            elif isinstance(layer, tf.keras.layers.Conv2D):
                 torch_layer = SupermaskConv(in_channels=last_shape[-1], out_channels=layer.filters,
                                             kernel_size=layer.kernel_size, stride=layer.strides, bias=True, k=subnet_k)
                 torch_layers.append(torch_layer)
-                last_shape = layer.weights[0].shape
+                last_shape = layer.output_shape
+                
             elif isinstance(layer, tf.keras.layers.Flatten):
                 torch_layers.append(nn.Flatten())
-                if ix == 0:  # first flatten layer does not use batch size
-                    last_shape = [np.prod(last_shape[1:])]
-                else:
-                    last_shape = [np.prod(last_shape)]
+                last_shape = layer.output_shape
+                
             elif isinstance(layer, tf.keras.layers.Dense):
                 torch_layer = SupermaskLinear(in_features=last_shape[-1], out_features=layer.weights[0].shape[-1],
                                               bias=True, k=subnet_k)
-                last_shape = layer.weights[0].shape
-                torch_layers.append(torch_layer)
+                torch_layers.append(torch_layer)            
+                last_shape = layer.output_shape
         
-        torch_model = nn.ModuleList(torch_layers)
-        print(torch_model)
-            
+        torch_layers.append(nn.Linear(in_features=last_shape[-1], out_features=1, bias=True)) # last layer to transform output
+        self.model = AgentModel(torch_layers)
+        torchsummary.summary(self.model, input_size=(input_shape[-1], input_shape[0], input_shape[1])) # torch wants chanell first
+        
+        if not randomize_weights:
+            self.model.load_agent_weigths(agent)
+
     """
        Train/Test function for Randomly Weighted Hidden Neural Networks Techniques
        Adapted from https://github.com/NesterukSergey/hidden-networks/blob/master/demos/mnist.ipynb
@@ -164,18 +201,17 @@ class TorchExtractor(object):
         auc = metrics.auc(fpr, tpr)
         return accuracy, auc
 
-    def _train(self, model, device, train_loader, optimizer, criterion):
+    def _train(self, train_loader, optimizer, criterion):
 
         train_loss = 0
         true_labels = []
         predictions = []
-
-        model.train()
-
+        
+        self.model.train()
         for data, target in itertools.islice(train_loader, self.num_train):
-            data, target = data.to(device), target.to(device)
+            data, target = data.to(self.device), target.to(self.device)
             optimizer.zero_grad()
-            output = model(data)
+            output = self.model(data)
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
@@ -184,42 +220,59 @@ class TorchExtractor(object):
             true_labels.extend(target.detach().cpu().numpy())
 
         train_loss /= len(train_loader.dataset)
-        accuracy, auc = compute_metrics(predictions, true_labels)
+        accuracy, auc = self.compute_metrics(predictions, true_labels)
 
         return train_loss.item(), accuracy, auc
 
-    def _test(self, model, device, test_loader, criterion):
+    def _test(self, test_loader, criterion):
         true_labels = []
         predictions = []
-
-        model.eval()
+        
+        self.model.eval()
         test_loss = 0
         with torch.no_grad():
             for data, target in itertools.islice(test_loader, self.num_val):
-                data, target = data.to(device), target.to(device)
-                output = model(data)
+                data, target = data.to(self.device), target.to(self.device)
+                output = self.model(data)
                 test_loss += criterion(output, target)
                 predictions.extend(output.detach().cpu().numpy())
                 true_labels.extend(target.detach().cpu().numpy())
 
         test_loss /= len(test_loader.dataset)
-        accuracy, auc = compute_metrics(predictions, true_labels)
+        accuracy, auc = self.compute_metrics(predictions, true_labels)
 
         return test_loss.item(), accuracy, auc
     
-    def single_train_pass(self, model):
+    def get_data_sample(self, xs, ys):
         
-        tr_data_loader, val_data_loader, x_train = get_data_sample(xs, ys)
+        xs, ys = shuffle(xs, ys)
+        xs = np.rollaxis(np.array(xs), 3, 1) # Torch wants channel-first
+        
+        tr_data_loader = torch.utils.data.DataLoader(
+            torch.utils.data.TensorDataset(torch.Tensor(xs[:self.num_train]), torch.Tensor(ys[:self.num_train])),
+            batch_size=self.batch_size)
+
+        val_data_loader = torch.utils.data.DataLoader(
+            torch.utils.data.TensorDataset(torch.Tensor(xs[self.num_train:self.num_val]),
+                                           torch.Tensor(ys[self.num_train:self.num_val])),
+            batch_size=self.batch_size)
+
+        return tr_data_loader, val_data_loader, xs[:self.num_train]
+
+    
+    def single_train_pass(self, xs, ys):
+        
+        tr_data_loader, val_data_loader, x_train = self.get_data_sample(xs, ys)
         
         # Normalise last layer using training data
-        if hasattr(model, 'layer_to_norm'):
-            model.mu_s = get_heads_mu_and_sigma(model, x_train)
+        # if hasattr(model, 'layer_to_norm'):
+        #    model.mu_s = get_heads_mu_and_sigma(model, x_train)
     
         optimizer = optim.Adam(
-            [p for p in model.parameters() if p.requires_grad],
+            [p for p in self.model.parameters() if p.requires_grad],
             lr=self.learning_rate, weight_decay=self.weight_decay)
         
-        criterion = nn.BCELoss().to(device)
+        criterion = nn.BCELoss().to(self.device)
         scheduler = CosineAnnealingLR(optimizer, T_max=len(tr_data_loader))
 
         train_losses, test_losses = [], []
@@ -229,10 +282,10 @@ class TorchExtractor(object):
         best_test_loss = np.inf
         test_loss_up_since = 0
         early_stop = 100
-        verbose = False
-        for epoch in range(self.num_epochs):
-            train_loss, train_accuracy, train_auc = self._train(model, device, tr_data_loader, optimizer, criterion)
-            test_loss, test_accuracy, test_auc = self._test(model, device, val_data_loader, criterion)
+        verbose = True
+        for epoch in range(self.epochs):
+            train_loss, train_accuracy, train_auc = self._train(tr_data_loader, optimizer, criterion)
+            test_loss, test_accuracy, test_auc = self._test(val_data_loader, criterion)
             scheduler.step()
             if test_loss < best_test_loss:
                 best_test_loss = test_loss
@@ -257,15 +310,12 @@ class TorchExtractor(object):
                 'trainAccuracy': train_accs, 'testAccuracy': test_accs,
                 'trainAUC': train_aucs, 'testAUC': test_aucs}
 
-    def train(self, model):
+    def train(self, xs, ys):
         
         averaged_results = {}
-        for run_ix in range(self.num_run):
-            results = self.single_train_pass(model)       
-        print(f'Train pass no. {run_ix+1}')
-
-        if (run_ix == 0):
-            print(model)
+        for run_ix in range(self.num_repeat):
+            print(f'Train pass no. {run_ix+1}')
+            results = self.single_train_pass(xs, ys)       
         
         for res in results:
             if len(results[res]) > 0:
@@ -274,4 +324,4 @@ class TorchExtractor(object):
                 else:
                     averaged_results[res].append(results[res][-1])         
     
-        return {x: sum(averaged_results[x]) / self.num_run for x in averaged_results}
+        return {x: sum(averaged_results[x]) / self.num_repeat for x in averaged_results}
