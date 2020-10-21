@@ -4,16 +4,16 @@ trainingInput:
   hyperparameters:
     goal: MAXIMIZE
     hyperparameterMetricTag: mean_val_auc
-    maxTrials: 2
-    maxParallelTrials: 2
+    maxTrials: 60
+    maxParallelTrials: 4
     params:
 
       - parameterName: gin_bindings=AGENT_DIR
         type: CATEGORICAL
         categoricalValues:
-        - "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000"
-        - "gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000"
-        - "gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000"
+        - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000'"
+        - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000'"
+        - "'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000'"
         
       - parameterName: gin_bindings=TorchExtractor.num_train
         type: INTEGER

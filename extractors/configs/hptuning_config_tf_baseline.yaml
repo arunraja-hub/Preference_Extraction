@@ -10,7 +10,7 @@ trainingInput:
       - parameterName: gin_bindings=TfExtractor.extractor_fn
         type: CATEGORICAL
         categoricalValues:
-        - "@agent_extractor"
+        - "@cnn_from_obs"
         
       - parameterName: gin_bindings=cnn_from_obs.reg_amount
         type: DOUBLE

@@ -11,9 +11,9 @@ trainingInput:
       - parameterName: gin_bindings=AGENT_DIR
         type: CATEGORICAL
         categoricalValues:
-        - "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000"
-        - "gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000"
-        - "gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000"
+        - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000'"
+        - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000'"
+        - "'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000'"
         
       - parameterName: gin_bindings=TfExtractor.num_train
         type: INTEGER
@@ -24,7 +24,7 @@ trainingInput:
         
       - parameterName: gin_bindings=agent_extractor.agent_last_layer
         type: INTEGER
-        minValue: 1
+        minValue: 2
         maxValue: 5
         scaleType: UNIT_LINEAR_SCALE
 
@@ -37,7 +37,7 @@ trainingInput:
         - "(0, 1, 2)"
         - "(0, 1, 2, 3)"
 
-      - parameterName: gin_bindings=agent_extractor.slowly_unfreezing
+      - parameterName: gin_bindings=TfExtractor.slowly_unfreezing
         type: CATEGORICAL
         categoricalValues:
         - "True"

@@ -31,7 +31,7 @@ cnn_from_obs.reg_amount = 0
 cnn_from_obs.drop_rate = 0
 
 agent_extractor.agent_path = %AGENT_DIR
-agent_extractor.agent_last_layer = 10
+agent_extractor.agent_last_layer = 5
 agent_extractor.agent_freezed_layers = ()
 agent_extractor.layer_sizes = (128, 64)
 agent_extractor.reg_amount = 0
