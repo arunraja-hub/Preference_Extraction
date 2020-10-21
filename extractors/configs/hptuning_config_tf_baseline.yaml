@@ -1,0 +1,32 @@
+trainingInput:
+  scaleTier: CUSTOM
+  masterType: n1-highmem-4
+  hyperparameters:
+    goal: MAXIMIZE
+    hyperparameterMetricTag: mean_val_auc
+    maxTrials: 20
+    maxParallelTrials: 4
+    params:
+      - parameterName: gin_bindings=TfExtractor.extractor_fn
+        type: CATEGORICAL
+        categoricalValues:
+        - "@agent_extractor"
+        
+      - parameterName: gin_bindings=cnn_from_obs.reg_amount
+        type: DOUBLE
+        minValue: 0.001
+        maxValue: 0.2
+        scaleType: UNIT_LOG_SCALE
+        
+      - parameterName: gin_bindings=cnn_from_obs.drop_rate
+        type: DOUBLE
+        minValue: 0.01
+        maxValue: 0.2
+        scaleType: UNIT_LOG_SCALE
+        
+      - parameterName: gin_bindings=TfExtractor.num_train
+        type: INTEGER
+        categoricalValues:
+        minValue: 50
+        maxValue: 1000
+        scaleType: UNIT_LOG_SCALE

@@ -69,6 +69,6 @@ def get_data_from_folder(base_path):
 
 def get_data_from_gcp(data_path):
     with file_io.FileIO(data_path, mode='rb') as fIn:
-        data = pickle.load(fIn)
+        data = rename_load(fIn)
     return data
 

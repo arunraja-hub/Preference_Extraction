@@ -18,7 +18,8 @@ from data_processing import transform_to_x_y, rebalance_data_to_minority_class
 from tf_extractor import TfExtractor
 from torch_extractor import TorchExtractor
 
-flags.DEFINE_string('gin_file', "", 'Paths to the study config file.')
+flags.DEFINE_multi_string('gin_file', '', 'Paths to the study config file.')
+flags.DEFINE_multi_string('gin_bindings', None, 'Gin binding to pass through.')
 FLAGS = flags.FLAGS
 
 @gin.configurable
@@ -40,16 +41,16 @@ def main(_):
     tf.compat.v2.enable_v2_behavior()
     
     gin_file = FLAGS.gin_file
-    gin.parse_config_file(gin_file, skip_unknown=True)
+    gin.parse_config_files_and_bindings(gin_file, FLAGS.gin_bindings, skip_unknown=True)
     
     xs, ys = data_pipeline()
     
     with gin.unlock_config():
         gin.bind_parameter('%INPUT_SHAPE', xs.shape[1:])
     
-    if gin_file.split('/')[-1] == 'tf.gin':
+    if gin_file[0].split('/')[-1] == 'tf.gin':
         extractor = TfExtractor()
-    elif gin_file.split('/')[-1] == 'torch.gin':
+    elif gin_file[0].split('/')[-1] == 'torch.gin':
         extractor = TorchExtractor()
     else:
         print('Error! Name of gin config does not suggest an extractor')

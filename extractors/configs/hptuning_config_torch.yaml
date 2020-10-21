@@ -3,36 +3,45 @@ trainingInput:
   masterType: n1-highmem-4
   hyperparameters:
     goal: MAXIMIZE
-    hyperparameterMetricTag: AverageReturn
-    maxTrials: 40
-    maxParallelTrials: 5
+    hyperparameterMetricTag: mean_val_auc
+    maxTrials: 2
+    maxParallelTrials: 2
     params:
-      - parameterName: gin_bindings=DoomEnvironment.frame_skip
-        type: INTEGER
-        minValue: 2
-        maxValue: 6
-        scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=critic/tf.train.AdamOptimizer.learning_rate
-        type: DOUBLE
-        minValue: 0.0001
-        maxValue: 0.1
-        scaleType: UNIT_LOG_SCALE
-
-      - parameterName: gin_bindings=tf_uniform_replay_buffer.TFUniformReplayBuffer.as_dataset.sample_batch_size
-        type: INTEGER
-        minValue: 32
-        maxValue: 128
-        scaleType: UNIT_LOG_SCALE
-
-      - parameterName: gin_bindings=initial_collect/dynamic_step_driver.DynamicStepDriver.num_steps
-        type: INTEGER
-        minValue: 500
-        maxValue: 5000
-        scaleType: UNIT_LOG_SCALE
-
-      - parameterName: gin_bindings=CONV_LAYER_PARAMS
+      - parameterName: gin_bindings=AGENT_DIR
         type: CATEGORICAL
         categoricalValues:
-        - "[[16, 3, 2]]"
-        - "[[16, 3, 2], [32, 3, 2]]"
+        - "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000"
+        - "gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000"
+        - "gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000"
+        
+      - parameterName: gin_bindings=TorchExtractor.num_train
+        type: INTEGER
+        categoricalValues:
+        minValue: 50
+        maxValue: 1000
+        scaleType: UNIT_LOG_SCALE
+        
+      - parameterName: gin_bindings=TorchExtractor.subnet_k
+        type: CATEGORICAL
+        categoricalValues:
+        - "0.0001"
+        - "0.001"
+        - "0.01"
+        - "0.1"
+        - "0.25"
+        - "0.5"
+        - "0.75"
+
+      - parameterName: gin_bindings=TorchExtractor.randomize_weights
+        type: CATEGORICAL
+        categoricalValues:
+        - "True"
+        - "False"
+        
+      - parameterName: gin_bindings=TorchExtractor.learning_rate
+        type: DOUBLE
+        categoricalValues:
+        minValue: 0.00001
+        maxValue: 0.1
+        scaleType: UNIT_LOG_SCALE

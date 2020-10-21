@@ -24,10 +24,20 @@ docker push $IMAGE_URI
 if [ $2 = "tf" ]
 then
   GIN_CONFIG="--gin_file configs/tf.gin"
-  CLOUD_CONFIG="--config configs/hptuning_config_tf.yaml"
+  if [ $4 = "base" ]
+  then
+    CLOUD_CONFIG="--config configs/hptuning_config_tf_baseline.yaml"
+  else
+    CLOUD_CONFIG="--config configs/hptuning_config_tf.yaml"
+  fi
 else
   GIN_CONFIG="--gin_file configs/torch.gin"
-  CLOUD_CONFIG="--config configs/hptuning_config_torch.yaml"
+  if [ $4 = "base" ]
+  then
+    CLOUD_CONFIG="--config configs/hptuning_config_torch_baseline.yaml"
+  else
+    CLOUD_CONFIG="--config configs/hptuning_config_torch.yaml"
+  fi
 fi
 
 if [ $3 -eq 0 ]

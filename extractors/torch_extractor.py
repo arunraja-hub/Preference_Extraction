@@ -17,6 +17,7 @@ import torch.autograd as autograd
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
+import hypertune
 
 class GetSubnet(autograd.Function):
     """
@@ -189,7 +190,10 @@ class TorchExtractor(object):
         
         if not randomize_weights:
             self.model.load_agent_weigths(agent_submodel, self.device)
-            self.verify_weights(agent_submodel, agent, input_shape)
+            if subnet_k == 1:
+                # Only verify weigths when extractor is not a subnetwork
+                # Otherwise the activations differ too much
+                self.verify_weights(agent_submodel, agent, input_shape)
             
     def verify_weights(self, agent_submodel, agent, input_shape):
         """
@@ -346,9 +350,9 @@ class TorchExtractor(object):
             test_accs.append(test_accuracy)
             test_aucs.append(test_auc)
 
-        return {'trainLoss': train_losses, 'testLoss': test_losses, 
-                'trainAccuracy': train_accs, 'testAccuracy': test_accs,
-                'trainAUC': train_aucs, 'testAUC': test_aucs}
+        return {'train_loss': train_losses, 'val_loss': test_losses, 
+                'train_accuracy': train_accs, 'val_accuracy': test_accs,
+                'train_auc': train_aucs, 'val_auc': test_aucs}
 
     def train(self, xs, ys):
         
@@ -364,5 +368,10 @@ class TorchExtractor(object):
                     else:
                         averaged_results[res].append(results[res][-1])         
     
-        result = {x: sum(averaged_results[x]) / self.num_repeat for x in averaged_results}
-        print(result)
+        metrics = {('mean_'+x): sum(averaged_results[x]) / self.num_repeat for x in averaged_results}
+        print(metrics)
+        
+        hpt = hypertune.HyperTune()
+        hpt.report_hyperparameter_tuning_metric(
+            hyperparameter_metric_tag='mean_val_auc',
+            metric_value=metrics['mean_val_auc'])

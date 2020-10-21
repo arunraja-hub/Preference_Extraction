@@ -1,5 +1,5 @@
-AGENT_DIR = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000"
-DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_500.pkl"
+AGENT_DIR = "gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000"
+DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_10000.pkl"
 INPUT_SHAPE = None
 
 data_pipeline.data_path = %DATA_PATH
@@ -15,6 +15,10 @@ TfExtractor.num_repeat = 2
 TfExtractor.epochs = 20
 TfExtractor.batch_size = 16
 TfExtractor.slowly_unfreezing = True
+TfExtractor.num_repeat = 5
+TfExtractor.epochs = 500
+TfExtractor.batch_size = 32
+TfExtractor.slowly_unfreezing = False
 
 SlowlyUnfreezing.unfreze_every_n_epochs = 10
 SlowlyUnfreezing.start_unfreezing_from = 3
@@ -26,9 +30,8 @@ cnn_from_obs.pooling = False
 cnn_from_obs.reg_amount = 0
 cnn_from_obs.drop_rate = 0
 
-
 agent_extractor.agent_path = %AGENT_DIR
-agent_extractor.agent_last_layer = 3
+agent_extractor.agent_last_layer = 10
 agent_extractor.agent_freezed_layers = ()
 agent_extractor.layer_sizes = (128, 64)
 agent_extractor.reg_amount = 0
