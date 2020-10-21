@@ -24,7 +24,7 @@ trainingInput:
         
       - parameterName: gin_bindings=agent_extractor.agent_last_layer
         type: INTEGER
-        minValue: 2
+        minValue: 3
         maxValue: 5
         scaleType: UNIT_LINEAR_SCALE
 
