@@ -1,0 +1,23 @@
+AGENT_DIR = None
+INPUT_SHAPE = None
+
+TfExtractor.extractor_fn = @agent_extractor
+TfExtractor.num_train = 50
+TfExtractor.num_val = 100
+TfExtractor.num_repeat = 2
+TfExtractor.epochs = 50
+TfExtractor.batch_size = 16
+TfExtractor.slowly_unfreezing = False
+
+cnn_from_obs.input_shape = %INPUT_SHAPE
+cnn_from_obs.reg_amount = 0
+cnn_from_obs.drop_rate = 0
+
+agent_extractor.agent_path = %AGENT_DIR
+agent_extractor.agent_last_layer = 3
+agent_extractor.agent_freezed_layers = ()
+agent_extractor.layer_sizes = (128, 64)
+agent_extractor.reg_amount = 0
+agent_extractor.drop_rate = 0
+agent_extractor.randomize_weights = False
+

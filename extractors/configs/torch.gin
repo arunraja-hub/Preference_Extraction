@@ -1,0 +1,14 @@
+AGENT_DIR = None
+INPUT_SHAPE = None
+
+TorchExtractor.agent_path = %AGENT_DIR
+TorchExtractor.input_shape = %INPUT_SHAPE
+TorchExtractor.subnet_k = 1
+TorchExtractor.randomize_weights = False
+TorchExtractor.num_train = 50
+TorchExtractor.num_val = 100
+TorchExtractor.num_repeat = 2
+TorchExtractor.epochs = 50
+TorchExtractor.batch_size = 16
+TorchExtractor.learning_rate = 1e-2
+TorchExtractor.weight_decay = 0

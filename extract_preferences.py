@@ -53,9 +53,15 @@ def main(_):
         gin.bind_parameter('%AGENT_DIR', agent_path)
         gin.bind_parameter('%INPUT_SHAPE', xs.shape[1:])
     
-    extractor = TorchExtractor()
+    if gin_file.split('/')[-1] == 'tf.gin':
+        extractor = TfExtractor()
+    elif gin_file.split('/')[-1] == 'torch.gin':
+        extractor = TorchExtractor()
+    else:
+        print('Error! Name of gin config does not suggest an extractor')
+        extractor = None
+    
     extractor.train(xs, ys)
-
 
 if __name__ == '__main__':
     flags.mark_flag_as_required('data_path')
