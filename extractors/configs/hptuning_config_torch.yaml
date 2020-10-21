@@ -1,0 +1,38 @@
+trainingInput:
+  scaleTier: CUSTOM
+  masterType: n1-highmem-4
+  hyperparameters:
+    goal: MAXIMIZE
+    hyperparameterMetricTag: AverageReturn
+    maxTrials: 40
+    maxParallelTrials: 5
+    params:
+      - parameterName: gin_bindings=DoomEnvironment.frame_skip
+        type: INTEGER
+        minValue: 2
+        maxValue: 6
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=critic/tf.train.AdamOptimizer.learning_rate
+        type: DOUBLE
+        minValue: 0.0001
+        maxValue: 0.1
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=tf_uniform_replay_buffer.TFUniformReplayBuffer.as_dataset.sample_batch_size
+        type: INTEGER
+        minValue: 32
+        maxValue: 128
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=initial_collect/dynamic_step_driver.DynamicStepDriver.num_steps
+        type: INTEGER
+        minValue: 500
+        maxValue: 5000
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=CONV_LAYER_PARAMS
+        type: CATEGORICAL
+        categoricalValues:
+        - "[[16, 3, 2]]"
+        - "[[16, 3, 2], [32, 3, 2]]"

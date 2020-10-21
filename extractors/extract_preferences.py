@@ -18,20 +18,17 @@ from data_processing import transform_to_x_y, rebalance_data_to_minority_class
 from tf_extractor import TfExtractor
 from torch_extractor import TorchExtractor
 
-sys.path.append('agent')
-
-flags.DEFINE_string('data_path', None, 'Path to experience data to extract preferences from')
-flags.DEFINE_string('agent_path', None, 'Path to agent to be used to learn preferences')
 flags.DEFINE_string('gin_file', "", 'Paths to the study config file.')
 FLAGS = flags.FLAGS
 
-def data_pipeline(data_path, env='doom', rebalance=True):
+@gin.configurable
+def data_pipeline(data_path, env, rebalance):
     if data_path[:5] == 'gs://':  # if GCP path
         data = get_data_from_gcp(data_path)
     else:  # for data saved localy as list of trajectories
         data = get_data_from_folder(data_path)
     
-    xs, ys = transform_to_x_y(data, env=env)
+    xs, ys = transform_to_x_y(data, env=env.lower())
     if rebalance:
         xs, ys = rebalance_data_to_minority_class(xs, ys)
     
@@ -44,13 +41,10 @@ def main(_):
     
     gin_file = FLAGS.gin_file
     gin.parse_config_file(gin_file, skip_unknown=True)
-    exp_data_path = FLAGS.data_path
-    agent_path = FLAGS.agent_path
     
-    xs, ys = data_pipeline(exp_data_path)
+    xs, ys = data_pipeline()
     
     with gin.unlock_config():
-        gin.bind_parameter('%AGENT_DIR', agent_path)
         gin.bind_parameter('%INPUT_SHAPE', xs.shape[1:])
     
     if gin_file.split('/')[-1] == 'tf.gin':
@@ -64,5 +58,5 @@ def main(_):
     extractor.train(xs, ys)
 
 if __name__ == '__main__':
-    flags.mark_flag_as_required('data_path')
+    flags.mark_flag_as_required('gin_file')
     app.run(main)
