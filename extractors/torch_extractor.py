@@ -216,7 +216,7 @@ class TorchExtractor(object):
             # Why are torch activations so 'relatively' different from tf ones
             # TODO: investigate if there is something missing in the tf-torch translation
         
-        for _ in range(50):
+        for _ in range(10):
             random_obs = np.random.random(size=(1,) + input_shape)
             random_obs_torch = torch.Tensor(np.rollaxis(random_obs, 3, 1))  # torch wants channel first
 

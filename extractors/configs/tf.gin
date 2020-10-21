@@ -7,7 +7,7 @@ TfExtractor.extractor_fn = @agent_extractor
 TfExtractor.num_train = 50
 TfExtractor.num_val = 100
 TfExtractor.num_repeat = 2
-TfExtractor.epochs = 50
+TfExtractor.epochs = 20
 TfExtractor.batch_size = 16
 TfExtractor.slowly_unfreezing = True
 
