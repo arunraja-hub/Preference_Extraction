@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.utils import shuffle
 
 def transform_to_x_y(raw_data, env, shuffle_data = True):
     """
@@ -28,9 +27,12 @@ def transform_to_x_y(raw_data, env, shuffle_data = True):
     ys = np.array(ys).astype(int)
     
     if shuffle_data:
-        return shuffle(xs, ys)
-    else:
-        return xs, ys
+        randomize = np.arange(len(xs))
+        np.random.shuffle(randomize)
+        xs = xs[randomize]
+        ys = ys[randomize]
+        
+    return xs, ys
     
 def rebalance_data_to_minority_class(xs, ys):
     

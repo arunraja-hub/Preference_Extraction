@@ -13,12 +13,10 @@ echo launching $JOB_NAME
 
 BUCKET_ID=pref_extract_train_output
 PROJECT_ID=preference-extraction
-IMAGE_URI=gcr.io/$PROJECT_ID/pref_extract_train_container:$JOB_NAME
+IMAGE_URI=gcr.io/$PROJECT_ID/pref_extract_tf_torch:$JOB_NAME
 JOB_DIR=gs://$BUCKET_ID/$JOB_NAME
 
 docker build -f Dockerfile -t $IMAGE_URI ./
-echo "Container built. You can test localy with"
-echo "docker run $IMAGE_URI --job-dir ~/pref_ext_train/$JOB_NAME"
 
 echo "Pushing and launching"
 docker push $IMAGE_URI
@@ -37,13 +35,13 @@ then
   CLOUD_CONFIG=""
 fi
 
+echo "Container built. You can test localy with"
+echo "docker run $IMAGE_URI $GIN_CONFIG"
+
 gcloud beta ai-platform jobs submit training $JOB_NAME \
   --region us-west1 \
   --master-image-uri $IMAGE_URI \
-  --job-dir $JOB_DIR \
   $CLOUD_CONFIG \
   -- $GIN_CONFIG
 
 echo "See the job training here: https://console.cloud.google.com/ai-platform/jobs?authuser=1&project=preference-extraction"
-
-echo "python3 -m tensorboard.main --logdir $JOB_DIR"

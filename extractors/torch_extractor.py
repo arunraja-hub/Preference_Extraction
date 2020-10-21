@@ -6,9 +6,6 @@ import math
 import itertools
 
 import numpy as np
-from sklearn import metrics
-from sklearn.metrics import roc_curve, auc, roc_auc_score
-from sklearn.utils import shuffle
 
 import gin
 import tensorflow as tf
@@ -19,7 +16,6 @@ import torch.nn.functional as F
 import torch.autograd as autograd
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
-import torchsummary
 
 
 class GetSubnet(autograd.Function):
@@ -190,7 +186,6 @@ class TorchExtractor(object):
                 
         torch_layers.append(nn.Linear(in_features=last_shape[-1], out_features=1, bias=True)) # last layer to transform output
         self.model = AgentModel(torch_layers)
-        torchsummary.summary(self.model, input_size=(input_shape[-1], input_shape[0], input_shape[1])) # torch wants chanell first
         
         if not randomize_weights:
             self.model.load_agent_weigths(agent_submodel, self.device)
@@ -237,8 +232,9 @@ class TorchExtractor(object):
         predictions = np.array(predictions)
         true_labels = np.array(true_labels)
         accuracy = np.sum(np.equal((predictions > 0.5).astype(int), true_labels)) / len(true_labels)
-        fpr, tpr, thresholds = metrics.roc_curve(true_labels, predictions)
-        auc = metrics.auc(fpr, tpr)
+        m = tf.keras.metrics.AUC()
+        m.update_state(true_labels, predictions)
+        auc = m.result().numpy()
         return accuracy, auc
 
     def _train(self, train_loader, optimizer, criterion):
@@ -285,7 +281,10 @@ class TorchExtractor(object):
     
     def get_data_sample(self, xs, ys):
         
-        xs, ys = shuffle(xs, ys)
+        randomize = np.arange(len(xs))
+        np.random.shuffle(randomize)
+        xs = xs[randomize]
+        ys = ys[randomize]
         xs = np.rollaxis(np.array(xs), 3, 1) # Torch wants channel-first
         
         tr_data_loader = torch.utils.data.DataLoader(
@@ -365,4 +364,5 @@ class TorchExtractor(object):
                     else:
                         averaged_results[res].append(results[res][-1])         
     
-        return {x: sum(averaged_results[x]) / self.num_repeat for x in averaged_results}
+        result = {x: sum(averaged_results[x]) / self.num_repeat for x in averaged_results}
+        print(result)

@@ -1,4 +1,6 @@
-FROM gcr.io/preference-extraction/pref_extract_base
+FROM gcr.io/preference-extraction/pref_extract_tf_torch
+
+RUN echo 'Launching training on GCP V1.0'
 
 WORKDIR /root
 COPY ./ /root/

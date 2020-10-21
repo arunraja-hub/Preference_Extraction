@@ -30,7 +30,7 @@ Modify the DockerfileBase file.
     docker build -f DockerfileBase -t $BASE_IMAGE_URI ./
     docker push $BASE_IMAGE_URI
 
-# To export and agent (locally)
+# To export an agent (locally)
 
 `python export.py --root_dir some/dir --gin_file some/gin/config/file`
 

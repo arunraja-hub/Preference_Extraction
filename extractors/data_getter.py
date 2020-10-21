@@ -16,8 +16,6 @@ import numpy as np
 from urllib.error import HTTPError
 from PIL import Image
 from scipy import ndimage
-from sklearn import metrics
-from sklearn.utils import shuffle
 from tensorflow.python.lib.io import file_io
 from tf_agents.trajectories.trajectory import Trajectory
 

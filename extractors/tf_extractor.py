@@ -7,8 +7,6 @@ import gin.tf.external_configurables
 
 import numpy as np
 
-from sklearn.utils import shuffle
-
 def get_val_auc(logs):
     for key in logs:
         if key.startswith('val_auc'):
@@ -154,7 +152,17 @@ class TfExtractor(object):
             Randomly splits the train and val data before training.
         """
         
+<<<<<<< HEAD
         xs, ys = shuffle(xs, ys)
+=======
+        tf.keras.backend.clear_session()
+        
+        randomize = np.arange(len(xs))
+        np.random.shuffle(randomize)
+        xs = xs[randomize]
+        ys = ys[randomize]
+        
+>>>>>>> Finished to refactor pipeline and managed to run tests on GCP;
         xs_val = xs[self.num_train:self.num_train+self.num_val]
         ys_val = ys[self.num_train:self.num_train+self.num_val]
         
