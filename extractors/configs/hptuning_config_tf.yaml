@@ -18,9 +18,12 @@ trainingInput:
       - parameterName: gin_bindings=TfExtractor.num_train
         type: INTEGER
         categoricalValues:
-        minValue: 50
-        maxValue: 1000
-        scaleType: UNIT_LOG_SCALE
+        type: CATEGORICAL
+        categoricalValues:
+        - "50"
+        - "100"
+        - "250"
+        - "500"
         
       - parameterName: gin_bindings=agent_extractor.agent_last_layer
         type: INTEGER

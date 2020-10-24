@@ -1,4 +1,4 @@
-AGENT_DIR = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000"
+AGENT_DIR = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000"
 DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_10000.pkl"
 INPUT_SHAPE = None
 
@@ -10,12 +10,12 @@ extractor_type.extractor = @TorchExtractor
 
 TorchExtractor.agent_path = %AGENT_DIR
 TorchExtractor.input_shape = %INPUT_SHAPE
-TorchExtractor.subnet_k = 1
+TorchExtractor.subnet_k = 0.75
 TorchExtractor.randomize_weights = False
-TorchExtractor.num_train = 50
+TorchExtractor.num_train = 118
 TorchExtractor.num_val = 1000
 TorchExtractor.num_repeat = 5
-TorchExtractor.epochs = 500
+TorchExtractor.epochs = 50
 TorchExtractor.batch_size = 32
-TorchExtractor.learning_rate = 1e-2
+TorchExtractor.learning_rate = 0.00626
 TorchExtractor.weight_decay = 0

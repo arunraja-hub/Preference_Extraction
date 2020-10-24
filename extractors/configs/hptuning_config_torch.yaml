@@ -16,16 +16,16 @@ trainingInput:
         - "'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000'"
         
       - parameterName: gin_bindings=TorchExtractor.num_train
-        type: INTEGER
+        type: CATEGORICAL
         categoricalValues:
-        minValue: 50
-        maxValue: 1000
-        scaleType: UNIT_LOG_SCALE
+        - "50"
+        - "100"
+        - "250"
+        - "500"
         
       - parameterName: gin_bindings=TorchExtractor.subnet_k
         type: CATEGORICAL
         categoricalValues:
-        - "0.0001"
         - "0.001"
         - "0.01"
         - "0.1"
@@ -42,6 +42,6 @@ trainingInput:
       - parameterName: gin_bindings=TorchExtractor.learning_rate
         type: DOUBLE
         categoricalValues:
-        minValue: 0.0001
+        minValue: 0.001
         maxValue: 0.1
         scaleType: UNIT_LOG_SCALE
