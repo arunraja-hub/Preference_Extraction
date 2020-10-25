@@ -16,8 +16,6 @@ trainingInput:
         - "'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000'"
         
       - parameterName: gin_bindings=TfExtractor.num_train
-        type: INTEGER
-        categoricalValues:
         type: CATEGORICAL
         categoricalValues:
         - "50"
