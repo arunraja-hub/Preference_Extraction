@@ -1,6 +1,7 @@
 """
     Main launcher for preference extraction experiments
 """
+import os
 import sys
 
 from absl import app
@@ -12,7 +13,7 @@ import gin.tf
 import tensorflow as tf
 import gin.tf.external_configurables
 
-from data_getter import get_data_from_gcp, get_data_from_folder
+from data_getter import get_data_from_file, get_data_from_folder
 from data_processing import transform_to_x_y, rebalance_data_to_minority_class
 
 from extractors.tf_extractor import TfExtractor
@@ -26,9 +27,9 @@ flags.DEFINE_string('gin_file', "", 'Paths to the study config file.')
 FLAGS = flags.FLAGS
 
 def data_pipeline(data_path, env='doom', rebalance=True):
-    if data_path[:5] == 'gs://':  # if GCP path
-        data = get_data_from_gcp(data_path)
-    else:  # for data saved localy as list of trajectories
+    if not os.path.isdir(data_path):
+        data = get_data_from_file(data_path)
+    else: # for data as list of trajectory files
         data = get_data_from_folder(data_path)
     
     xs, ys = transform_to_x_y(data, env=env)
@@ -36,7 +37,11 @@ def data_pipeline(data_path, env='doom', rebalance=True):
         xs, ys = rebalance_data_to_minority_class(xs, ys)
     
     return xs, ys
-    
+
+@gin.configurable
+def extractor_type(extractor):
+    return extractor()
+
 def main(_):
     logging.set_verbosity(logging.INFO)
     tf.compat.v1.enable_resource_variables()
@@ -46,21 +51,14 @@ def main(_):
     gin.parse_config_file(gin_file, skip_unknown=True)
     exp_data_path = FLAGS.data_path
     agent_path = FLAGS.agent_path
-    
+
     xs, ys = data_pipeline(exp_data_path)
     
     with gin.unlock_config():
         gin.bind_parameter('%AGENT_DIR', agent_path)
         gin.bind_parameter('%INPUT_SHAPE', xs.shape[1:])
     
-    if gin_file.split('/')[-1] == 'tf.gin':
-        extractor = TfExtractor()
-    elif gin_file.split('/')[-1] == 'torch.gin':
-        extractor = TorchExtractor()
-    else:
-        print('Error! Name of gin config does not suggest an extractor')
-        extractor = None
-    
+    extractor = extractor_type()
     extractor.train(xs, ys)
 
 if __name__ == '__main__':

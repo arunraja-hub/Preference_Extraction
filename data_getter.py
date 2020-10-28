@@ -56,7 +56,7 @@ def get_data_from_folder(base_path):
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=100)
     
     futures = []
-    for i in range(5000):
+    for i in range(len(os.listdir(base_path))):
         full_path = os.path.join(base_path, "ts"+str(i)+".pickle")
         future = executor.submit(load_file, full_path)
         futures.append(future)
@@ -69,7 +69,7 @@ def get_data_from_folder(base_path):
     
     return raw_data
 
-def get_data_from_gcp(data_path):
+def get_data_from_file(data_path):
     with file_io.FileIO(data_path, mode='rb') as fIn:
         data = pickle.load(fIn)
     return data

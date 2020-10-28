@@ -45,6 +45,18 @@ class GetSubnet(autograd.Function):
     def backward(ctx, g):
         # send the gradient g straight-through on the backward pass.
         return g, None
+    
+def get_initializer(initializer_type):
+    if initializer_type == 'kaiming_normal':
+        return nn.init.kaiming_normal_, {}
+    elif initializer_type == 'kaiming_uniform':
+        return nn.init.kaiming_uniform_, {'a': math.sqrt(5)}
+    elif initializer_type == 'xavier_normal':
+        return nn.init.xavier_normal_, {}
+    elif initializer_type == 'best_activation':
+        return nn.init.ones_, {}
+    else:
+        return nn.init.uniform_
 
 class SupermaskConv(nn.Conv2d):
     def __init__(self, *args, k, scores_init='kaiming_uniform', **kwargs):
@@ -54,16 +66,8 @@ class SupermaskConv(nn.Conv2d):
 
         # initialize the scores
         self.scores = nn.Parameter(torch.Tensor(self.weight.size()))
-        if self.scores_init == 'kaiming_normal':
-            nn.init.kaiming_normal_(self.scores)
-        elif self.scores_init == 'kaiming_uniform':
-            nn.init.kaiming_uniform_(self.scores, a=math.sqrt(5))
-        elif self.scores_init == 'xavier_normal':
-            nn.init.xavier_normal_(self.scores)
-        elif self.scores_init == 'best_activation':
-            nn.init.ones_(self.scores)
-        else:
-            nn.init.uniform_(self.scores)
+        initializer, init_kwargs = get_initializer(scores_init)
+        initializer(self.scores, **init_kwargs)
         
         # NOTE: turn the gradient on the weights off
         self.weight.requires_grad = False
@@ -82,16 +86,8 @@ class SupermaskLinear(nn.Linear):
 
         # initialize the scores and weights
         self.scores = nn.Parameter(torch.Tensor(self.weight.size()))
-        if self.scores_init == 'kaiming_normal':
-            nn.init.kaiming_normal_(self.scores)
-        elif self.scores_init == 'kaiming_uniform':
-            nn.init.kaiming_uniform_(self.scores, a=math.sqrt(5))
-        elif self.scores_init == 'xavier_normal':
-            nn.init.xavier_normal_(self.scores)
-        elif self.scores_init == 'best_activation':
-            nn.init.ones_(self.scores)
-        else:
-            nn.init.uniform_(self.scores)
+        initializer, args = get_initializer(scores_init)
+        initializer(self.scores, **args)
 
         # NOTE: turn the gradient on the weights off
         self.weight.requires_grad = False
@@ -151,9 +147,7 @@ class TorchExtractor(object):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
-                
-        np.random.seed(0)
-        torch.manual_seed(0)
+
         torch.set_printoptions(precision=8)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
@@ -364,11 +358,11 @@ class TorchExtractor(object):
             print(f'Train pass no. {run_ix+1}')
             results = self.single_train_pass(xs, ys)       
         
-        for res in results:
-            if len(results[res]) > 0:
-                if res not in averaged_results:
-                    averaged_results[res] = [results[res][-1]]
-                else:
-                    averaged_results[res].append(results[res][-1])         
+            for res in results:
+                if len(results[res]) > 0:
+                    if res not in averaged_results:
+                        averaged_results[res] = [results[res][-1]]
+                    else:
+                        averaged_results[res].append(results[res][-1])         
     
         return {x: sum(averaged_results[x]) / self.num_repeat for x in averaged_results}

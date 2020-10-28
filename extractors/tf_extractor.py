@@ -37,37 +37,51 @@ class BestStats(tf.keras.callbacks.Callback):
             self.bestMetric = metric
             self.bestLogs = logs
 
+@gin.configurable
 class SlowlyUnfreezing(tf.keras.callbacks.Callback):
     """A callback to slowly unfreeze previously frozen activation layers"""
+    def __init__(self, unfreze_every_n_epochs, start_unfreezing_from = 3):
+        self.unfreze_every_n_epochs = unfreze_every_n_epochs
+        self.start_unfreezing_from = start_unfreezing_from
+        
     def on_train_begin(self, logs):
         self.num_epochs = 0
-        
+        self.num_layers = len(self.model.layers)
+        for ix in range(self.start_unfreezing_from, -1, -1):
+            self.model.layers[ix].trainable = False
+            
     def on_epoch_end(self, epoch, logs):
         self.num_epochs += 1
-        if self.num_epochs >= 50:
-            self.model.layers[3].trainable = True
-        if self.num_epochs >= 100:
-            self.model.layers[2].trainable = True
-        if self.num_epochs >= 150:
-            self.model.layers[1].trainable = True
-        if self.num_epochs >= 200:
-            self.model.layers[0].trainable = True
+        layers_to_unfreeze = int(self.num_epochs / self.unfreze_every_n_epochs)
+        for ix in range(self.start_unfreezing_from, self.start_unfreezing_from - layers_to_unfreeze, -1):
+            self.model.layers[ix].trainable = True
+            
 
 @gin.configurable
-def cnn_from_obs(input_shape, reg_amount, drop_rate):
+def cnn_from_obs(input_shape, reg_amount, drop_rate, pick_random_col_ch, conv_layer_params, pooling):
     """
        Simple Convolutional Neural Network
        that extracts preferences from observations
     """
-
-    model = tf.keras.models.Sequential([
-        # This layer gets one of the color channels. It works better than using all of them.
-        tf.keras.layers.Lambda(lambda x:  tf.expand_dims(x[:,:,:,tf.random.uniform((), 0,4, tf.int32)], 3),
-                               input_shape=input_shape),
-        tf.keras.layers.Conv2D(64, 2, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(reg_amount)),
-        tf.keras.layers.Conv2D(32, 1, activation='relu', strides=1,
-                               kernel_regularizer=tf.keras.regularizers.l2(reg_amount)),
-        tf.keras.layers.GlobalAveragePooling2D(),
+    layers = []
+    if pick_random_col_ch:
+         # layer to get one of the color channels. It works better than using all of them in the gridworld
+        layers.append(tf.keras.layers.Lambda(lambda x: tf.expand_dims(
+            x[:,:,:,tf.random.uniform((), 0,4, tf.int32)], 3), input_shape=input_shape))
+    
+    for ix, layer_params in enumerate(conv_layer_params):
+        ch, krnl, strd = layer_params
+        if ix == 0 and len(layers) == 0:
+            layers.append(tf.keras.layers.Conv2D(ch, krnl, input_shape=input_shape, strides=strd, activation='relu',
+                                                 kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+        else:
+            layers.append(tf.keras.layers.Conv2D(ch, krnl, strides=strd, activation='relu',
+                                                 kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+    
+    if pooling:
+        layers.append(tf.keras.layers.GlobalAveragePooling2D())
+    
+    model = tf.keras.models.Sequential(layers + [
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dropout(drop_rate),
         tf.keras.layers.Dense(1, activation='sigmoid', kernel_regularizer=tf.keras.regularizers.l2(reg_amount))
@@ -78,13 +92,11 @@ def cnn_from_obs(input_shape, reg_amount, drop_rate):
 
     return model
 
-def reset_model_weights(model):    
+def reset_model_weights(model):
     for keras_layer in model.layers:
-        initializer = tf.keras.initializers.VarianceScaling(
-            scale=1.0, mode="fan_in", distribution="truncated_normal", seed=None)
         if len(keras_layer.weights) > 0:
-            weights = initializer(shape=keras_layer.weights[0].shape)
-            biases = initializer(shape=keras_layer.weights[1].shape)
+            weights = keras_layer.kernel_initializer(shape=keras_layer.weights[0].shape)
+            biases = keras_layer.kernel_initializer(shape=keras_layer.weights[1].shape)
             keras_layer.set_weights([weights, biases])
 
 @gin.configurable            
@@ -98,15 +110,11 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
     layers = []
     for ix, layer_size in enumerate(layer_sizes):
         layers.append(tf.keras.layers.Dense(layer_size, activation='relu',
-                       kernel_regularizer=tf.keras.regularizers.l2(reg_amount), name='post_agent_{}'.format(ix)))
-        if drop_rate > 0:
-            layers.append(tf.keras.layers.Dropout(drop_rate))
+                      kernel_regularizer=tf.keras.regularizers.l2(reg_amount), name='post_agent_{}'.format(ix)))
+        layers.append(tf.keras.layers.Dropout(drop_rate))
             
     for ix, _ in enumerate(agent.layers[:agent_last_layer]):
-        if ix in agent_freezed_layers:
-            agent.layers[ix].trainable = False
-        else:
-            agent.layers[ix].trainable = True
+        agent.layers[ix].trainable = ix not in agent_freezed_layers
     
     model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers + [
         tf.keras.layers.Dense(1, activation='sigmoid', 
@@ -145,8 +153,6 @@ class TfExtractor(object):
             Trains the model and retruns the logs of the best epoch.
             Randomly splits the train and val data before training.
         """
-        
-        tf.keras.backend.clear_session()
         
         xs, ys = shuffle(xs, ys)
         xs_val = xs[self.num_train:self.num_train+self.num_val]

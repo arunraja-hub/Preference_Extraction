@@ -1,6 +1,8 @@
 AGENT_DIR = None
 INPUT_SHAPE = None
 
+extractor_type.extractor = @TorchExtractor
+
 TorchExtractor.agent_path = %AGENT_DIR
 TorchExtractor.input_shape = %INPUT_SHAPE
 TorchExtractor.subnet_k = 1
