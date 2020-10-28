@@ -1,6 +1,7 @@
 """
     Main launcher for preference extraction experiments
 """
+import os
 import sys
 
 from absl import app

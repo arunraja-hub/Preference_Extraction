@@ -13,7 +13,7 @@ def transform_to_x_y(raw_data, env, shuffle_data = True):
         for i in range(data.observation.shape[0]):
             x = np.copy(data.observation[i])
 
-            if env == 'doom':
+            if env.lower() == 'doom':
                 # Doom label object is a dictionary with object_angle and distance_from_wall
                 label_object = data.policy_info['satisfaction'][i]
                 if len(label_object) == 0: # When label is empty, i.e. human is dead, skip frame

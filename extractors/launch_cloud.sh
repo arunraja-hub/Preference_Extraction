@@ -35,6 +35,6 @@ gcloud beta ai-platform jobs submit training $JOB_NAME \
   --region us-west1 \
   --master-image-uri $IMAGE_URI \
   $CLOUD_CONFIG \
-  -- "--gin-file $2"
+  -- "--gin_file $2"
 
 echo "See the job training here: https://console.cloud.google.com/ai-platform/jobs?authuser=1&project=preference-extraction"
