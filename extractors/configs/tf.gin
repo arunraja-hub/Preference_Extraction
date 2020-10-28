@@ -14,7 +14,7 @@ TfExtractor.num_val = 100
 TfExtractor.num_repeat = 5
 TfExtractor.epochs = 500
 TfExtractor.batch_size = 32
-TfExtractor.slowly_unfreezing = False
+TfExtractor.slowly_unfreezing = True
 
 SlowlyUnfreezing.unfreze_every_n_epochs = 10
 SlowlyUnfreezing.start_unfreezing_from = 3

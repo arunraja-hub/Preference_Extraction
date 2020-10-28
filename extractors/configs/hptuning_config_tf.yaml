@@ -43,6 +43,20 @@ trainingInput:
         categoricalValues:
         - "True"
         - "False"
+        
+      - parameterName: gin_bindings=TfExtractor.start_unfreezing_from
+        type: CATEGORICAL
+        categoricalValues:
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        
+      - parameterName: gin_bindings=TfExtractor.unfreze_every_n_epochs
+        type: INTEGER
+        minValue: 5
+        maxValue: 100
+        scaleType: UNIT_LOG_SCALE
 
       - parameterName: gin_bindings=agent_extractor.randomize_weights
         type: CATEGORICAL

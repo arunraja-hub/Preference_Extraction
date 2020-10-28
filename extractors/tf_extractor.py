@@ -46,7 +46,7 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
         
     def on_train_begin(self, logs):
         self.num_epochs = 0
-        self.num_layers = len(self.model.layers)
+        self.start_unfreezing_from = min(self.start_unfreezing_from, len(self.model.layers) - 1)
         for ix in range(self.start_unfreezing_from, -1, -1):
             self.model.layers[ix].trainable = False
             
@@ -55,7 +55,7 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
         layers_to_unfreeze = int(self.num_epochs / self.unfreze_every_n_epochs)
         for ix in range(self.start_unfreezing_from, self.start_unfreezing_from - layers_to_unfreeze, -1):
             self.model.layers[ix].trainable = True
-            
+
 
 @gin.configurable
 def cnn_from_obs(input_shape, reg_amount, drop_rate, pick_random_col_ch, conv_layer_params, pooling):

@@ -31,10 +31,12 @@ else
   CLOUD_CONFIG="--config $3"
 fi
 
+GIN_CONFIG="--gin_file $2"
+
 gcloud beta ai-platform jobs submit training $JOB_NAME \
   --region us-west1 \
   --master-image-uri $IMAGE_URI \
   $CLOUD_CONFIG \
-  -- "--gin_file $2"
+  -- $GIN_CONFIG
 
 echo "See the job training here: https://console.cloud.google.com/ai-platform/jobs?authuser=1&project=preference-extraction"
