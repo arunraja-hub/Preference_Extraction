@@ -44,7 +44,7 @@ trainingInput:
         - "True"
         - "False"
         
-      - parameterName: gin_bindings=conv_layer_params.pooling
+      - parameterName: gin_bindings=cnn_from_obs.conv_layer_params
         type: CATEGORICAL
         categoricalValues:
         - "[[64, 2, 1], [16, 1, 1]]"

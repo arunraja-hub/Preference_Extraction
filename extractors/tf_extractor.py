@@ -54,7 +54,8 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
         self.num_epochs += 1
         layers_to_unfreeze = int(self.num_epochs / self.unfreze_every_n_epochs)
         for ix in range(self.start_unfreezing_from, self.start_unfreezing_from - layers_to_unfreeze, -1):
-            self.model.layers[ix].trainable = True
+            if ix >= 0:
+                self.model.layers[ix].trainable = True
 
 
 @gin.configurable

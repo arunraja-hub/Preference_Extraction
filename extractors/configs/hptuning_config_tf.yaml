@@ -37,14 +37,8 @@ trainingInput:
         - "(0, 1)"
         - "(0, 1, 2)"
         - "(0, 1, 2, 3)"
-
-      - parameterName: gin_bindings=TfExtractor.slowly_unfreezing
-        type: CATEGORICAL
-        categoricalValues:
-        - "True"
-        - "False"
         
-      - parameterName: gin_bindings=TfExtractor.start_unfreezing_from
+      - parameterName: gin_bindings=SlowlyUnfreezing.start_unfreezing_from
         type: CATEGORICAL
         categoricalValues:
         - "1"
@@ -52,7 +46,7 @@ trainingInput:
         - "3"
         - "4"
         
-      - parameterName: gin_bindings=TfExtractor.unfreze_every_n_epochs
+      - parameterName: gin_bindings=SlowlyUnfreezing.unfreze_every_n_epochs
         type: INTEGER
         minValue: 5
         maxValue: 100
