@@ -1,0 +1,32 @@
+AGENT_DIR = None
+INPUT_SHAPE = None
+
+extractor_type.extractor = @TfExtractor
+
+TfExtractor.extractor_fn = @agent_extractor
+TfExtractor.num_train = 50
+TfExtractor.num_val = 100
+TfExtractor.num_repeat = 2
+TfExtractor.epochs = 50
+TfExtractor.batch_size = 16
+TfExtractor.slowly_unfreezing = True
+
+SlowlyUnfreezing.unfreze_every_n_epochs = 10
+SlowlyUnfreezing.start_unfreezing_from = 3
+
+cnn_from_obs.input_shape = %INPUT_SHAPE
+cnn_from_obs.pick_random_col_ch = False
+cnn_from_obs.conv_layer_params = [[64, 2, 1], [16, 1, 1]]
+cnn_from_obs.pooling = False
+cnn_from_obs.reg_amount = 0
+cnn_from_obs.drop_rate = 0
+
+
+agent_extractor.agent_path = %AGENT_DIR
+agent_extractor.agent_last_layer = 3
+agent_extractor.agent_freezed_layers = ()
+agent_extractor.layer_sizes = (128, 64)
+agent_extractor.reg_amount = 0
+agent_extractor.drop_rate = 0
+agent_extractor.randomize_weights = True
+
