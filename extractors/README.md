@@ -20,11 +20,16 @@ The pipeline it uses is similar to that for [training agents][../agent/]
 
 ## Lunch on g cloud
 
-* CNN from observations: `./launch_cloud.sh <JOB_NAME> tf 1 base`
-* TF Agent: `./launch_cloud.sh <JOB_NAME> tf 1`
-* PyTorch subnetworks finder: `./launch_cloud.sh <JOB_NAME> torch 1`
+General format
+```
+./launch_cloud.sh <JOB_NAME> <PATH_TO_GIN_FILE> <PATH_TO_YAML_FILE>
+```
 
-Note: the `1` in the command line signals to the platform to run hyperparameter tuning, if you want to simply run a job on the cloud without tuning replace the `1` with a `0`
+* CNN from observations: `./launch_cloud.sh <JOB_NAME> configs/tf.gin configs/hptuning_config_tf_baseline.yaml`
+* TF Agent: `./launch_cloud.sh <JOB_NAME> configs/tf.gin configs/hptuning_config_tf.yaml
+* PyTorch subnetworks finder: `./launch_cloud.sh <JOB_NAME> configs/torch.gin configs/hptuning_config_torch.yaml`
+
+Note: the `<PATH_TO_YAML_FILE>` in the command line signals to the platform to run hyperparameter tuning, if you want to simply run a job on the cloud without tuning just don't pass it
 
 ## Modify dependencies
 

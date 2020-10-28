@@ -21,37 +21,20 @@ docker build -f Dockerfile -t $IMAGE_URI ./
 echo "Pushing and launching"
 docker push $IMAGE_URI
 
-if [ $2 = "tf" ]
-then
-  GIN_CONFIG="--gin_file configs/tf.gin"
-  if [ $4 = "base" ]
-  then
-    CLOUD_CONFIG="--config configs/hptuning_config_tf_baseline.yaml"
-  else
-    CLOUD_CONFIG="--config configs/hptuning_config_tf.yaml"
-  fi
-else
-  GIN_CONFIG="--gin_file configs/torch.gin"
-  if [ $4 = "base" ]
-  then
-    CLOUD_CONFIG="--config configs/hptuning_config_torch_baseline.yaml"
-  else
-    CLOUD_CONFIG="--config configs/hptuning_config_torch.yaml"
-  fi
-fi
-
-if [ $3 -eq 0 ]
-then
-  CLOUD_CONFIG=""
-fi
-
 echo "Container built. You can test localy with"
 echo "docker run $IMAGE_URI $GIN_CONFIG"
+
+if [ -z "$3" ]
+then
+  CLOUD_CONFIG=""
+else
+  CLOUD_CONFIG="--config $3"
+fi
 
 gcloud beta ai-platform jobs submit training $JOB_NAME \
   --region us-west1 \
   --master-image-uri $IMAGE_URI \
   $CLOUD_CONFIG \
-  -- $GIN_CONFIG
+  -- "--gin-file $2"
 
 echo "See the job training here: https://console.cloud.google.com/ai-platform/jobs?authuser=1&project=preference-extraction"
