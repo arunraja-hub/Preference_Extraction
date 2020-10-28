@@ -12,7 +12,7 @@ import gin.tf
 import tensorflow as tf
 import gin.tf.external_configurables
 
-from data_getter import get_data_from_gcp, get_data_from_folder
+from data_getter import get_data_from_file, get_data_from_folder
 from data_processing import transform_to_x_y, rebalance_data_to_minority_class
 
 from tf_extractor import TfExtractor
@@ -23,18 +23,22 @@ flags.DEFINE_multi_string('gin_bindings', None, 'Gin binding to pass through.')
 FLAGS = flags.FLAGS
 
 @gin.configurable
-def data_pipeline(data_path, env, rebalance):
-    if data_path[:5] == 'gs://':  # if GCP path
-        data = get_data_from_gcp(data_path)
-    else:  # for data saved localy as list of trajectories
+def data_pipeline(data_path, env='doom', rebalance=True):
+    if not os.path.isdir(data_path):
+        data = get_data_from_file(data_path)
+    else: # for data as list of trajectory files
         data = get_data_from_folder(data_path)
     
-    xs, ys = transform_to_x_y(data, env=env.lower())
+    xs, ys = transform_to_x_y(data, env=env)
     if rebalance:
         xs, ys = rebalance_data_to_minority_class(xs, ys)
     
     return xs, ys
-    
+
+@gin.configurable
+def extractor_type(extractor):
+    return extractor()
+
 def main(_):
     logging.set_verbosity(logging.INFO)
     tf.compat.v1.enable_resource_variables()
@@ -48,14 +52,7 @@ def main(_):
     with gin.unlock_config():
         gin.bind_parameter('%INPUT_SHAPE', xs.shape[1:])
     
-    if gin_file[0].split('/')[-1] == 'tf.gin':
-        extractor = TfExtractor()
-    elif gin_file[0].split('/')[-1] == 'torch.gin':
-        extractor = TorchExtractor()
-    else:
-        print('Error! Name of gin config does not suggest an extractor')
-        extractor = None
-    
+    extractor = extractor_type()
     extractor.train(xs, ys)
 
 if __name__ == '__main__':

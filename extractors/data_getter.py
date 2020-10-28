@@ -67,7 +67,7 @@ def get_data_from_folder(base_path):
     
     return raw_data
 
-def get_data_from_gcp(data_path):
+def get_data_from_file(data_path):
     with file_io.FileIO(data_path, mode='rb') as fIn:
         data = rename_load(fIn)
     return data
