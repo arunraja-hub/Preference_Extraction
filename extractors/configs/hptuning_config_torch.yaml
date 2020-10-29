@@ -15,18 +15,9 @@ trainingInput:
         - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000'"
         - "'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000'"
         
-      - parameterName: gin_bindings=TorchExtractor.num_train
-        type: CATEGORICAL
-        categoricalValues:
-        - "50"
-        - "100"
-        - "250"
-        - "500"
-        
       - parameterName: gin_bindings=TorchExtractor.subnet_k
         type: CATEGORICAL
         categoricalValues:
-        - "0.001"
         - "0.01"
         - "0.1"
         - "0.25"

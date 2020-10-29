@@ -4,21 +4,13 @@ trainingInput:
   hyperparameters:
     goal: MAXIMIZE
     hyperparameterMetricTag: mean_val_auc
-    maxTrials: 30
+    maxTrials: 60
     maxParallelTrials: 4
     params:
       - parameterName: gin_bindings=TfExtractor.extractor_fn
         type: CATEGORICAL
         categoricalValues:
         - "@cnn_from_obs"
-
-      - parameterName: gin_bindings=TfExtractor.num_train
-        type: CATEGORICAL
-        categoricalValues:
-        - "50"
-        - "100"
-        - "250"
-        - "500"
 
       - parameterName: gin_bindings=cnn_from_obs.reg_amount
         type: DOUBLE
@@ -31,12 +23,6 @@ trainingInput:
         minValue: 0.01
         maxValue: 0.2
         scaleType: UNIT_LOG_SCALE
-
-      - parameterName: gin_bindings=cnn_from_obs.pick_random_col_ch
-        type: CATEGORICAL
-        categoricalValues:
-        - "True"
-        - "False"
 
       - parameterName: gin_bindings=cnn_from_obs.pooling
         type: CATEGORICAL
