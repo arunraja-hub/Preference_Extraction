@@ -7,7 +7,7 @@ import gin.tf.external_configurables
 
 import numpy as np
 
-from sklearn.utils import shuffle
+import hypertune
 
 def get_val_auc(logs):
     for key in logs:
@@ -46,7 +46,7 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
         
     def on_train_begin(self, logs):
         self.num_epochs = 0
-        self.num_layers = len(self.model.layers)
+        self.start_unfreezing_from = min(self.start_unfreezing_from, len(self.model.layers) - 1)
         for ix in range(self.start_unfreezing_from, -1, -1):
             self.model.layers[ix].trainable = False
             
@@ -54,8 +54,9 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
         self.num_epochs += 1
         layers_to_unfreeze = int(self.num_epochs / self.unfreze_every_n_epochs)
         for ix in range(self.start_unfreezing_from, self.start_unfreezing_from - layers_to_unfreeze, -1):
-            self.model.layers[ix].trainable = True
-            
+            if ix >= 0:
+                self.model.layers[ix].trainable = True
+
 
 @gin.configurable
 def cnn_from_obs(input_shape, reg_amount, drop_rate, pick_random_col_ch, conv_layer_params, pooling):
@@ -148,13 +149,17 @@ class TfExtractor(object):
         self.batch_size = batch_size
         self.slowly_unfreezing = slowly_unfreezing
         
-    def train_best_logs(self, xs, ys, do_summary=True):
+    def train_best_logs(self, xs, ys, do_summary):
         """
             Trains the model and retruns the logs of the best epoch.
             Randomly splits the train and val data before training.
         """
         
-        xs, ys = shuffle(xs, ys)
+        randomize = np.arange(len(xs))
+        np.random.shuffle(randomize)
+        xs = xs[randomize]
+        ys = ys[randomize]
+        
         xs_val = xs[self.num_train:self.num_train+self.num_val]
         ys_val = ys[self.num_train:self.num_train+self.num_val]
         
@@ -175,36 +180,37 @@ class TfExtractor(object):
         
         return best_stats.bestLogs
     
-    def multiple_train_ave(self, xs, ys, do_summary = True):
+    def multiple_train_ave(self, xs, ys, do_summary):
         """
             Trains the model multiple times with the same parameters and returns the average metrics
         """
         
-        start = time.time()
         all_val_auc = []
         all_val_accuracy = []
 
-        
         for i in range(self.num_repeat):
             logs = self.train_best_logs(xs, ys, do_summary=do_summary)
             all_val_auc.append(get_val_auc(logs))
             all_val_accuracy.append(logs.get('val_accuracy'))
             do_summary = False 
-
+        
         mean_val_auc = np.mean(all_val_auc)
         mean_val_accuracy = np.mean(all_val_accuracy)
-        metric = (mean_val_auc + mean_val_accuracy) / 2.0
-        print_data = ("mean_val_auc", mean_val_auc, "mean_val_accuracy", mean_val_accuracy, 
-                      "metric", metric, "val_auc_std", np.std(all_val_auc), "val_accuracy_std", np.std(all_val_accuracy))
+        
+        return {
+            "mean_val_auc": mean_val_auc,
+            "mean_val_accuracy": mean_val_accuracy,
+            "metric": (mean_val_auc + mean_val_accuracy) / 2.0,
+            "val_auc_std": np.std(all_val_auc),
+            "val_accuracy_std": np.std(all_val_accuracy)
+        }
 
-        end = time.time()
-        print("Seconds per hyperparam config", end - start)
-
-        return metric, print_data
-    
     def train(self, xs, ys, do_summary = True):
         
-        best_metric = -float('inf')
-        run_num = 0
-        metric, print_data = self.multiple_train_ave(xs, ys, do_summary)
-        print(print_data)
+        metrics = self.multiple_train_ave(xs, ys, do_summary)
+        print(metrics)
+        
+        hpt = hypertune.HyperTune()
+        hpt.report_hyperparameter_tuning_metric(
+            hyperparameter_metric_tag='mean_val_auc',
+            metric_value=metrics['mean_val_auc'])
