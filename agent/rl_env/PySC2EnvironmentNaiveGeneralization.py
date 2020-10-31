@@ -30,8 +30,11 @@ from pysc2.env import run_loop
 from pysc2.env import sc2_env
 from pysc2.lib import point_flag
 from pysc2.lib import stopwatch
+from pysc2.lib import named_array
 
 from absl import logging
+
+# based on https://github.com/deepmind/pysc2/blob/master/pysc2/bin/agent.py and https://github.com/deepmind/pysc2/blob/master/pysc2/env/run_loop.py
 
 FLAGS = flags.FLAGS
 flags.DEFINE_bool("render", True, "Whether to render with pygame.")
@@ -141,16 +144,16 @@ class PySC2Env(py_environment.PyEnvironment):
 
   def _reset(self):
     self._episode_ended = False
-    return ts.restart(np.array([self.timesteps[0].observation.score_cumulative["score"]], dtype=np.int32)) #TODO: Fix this
+    return ts.restart(np.array([self.timesteps[0].observation], dtype=named_array.NamedDict)) #TODO: Fix this
 
   def _step(self, action):
     actions = [agent.step(timestep) for agent, timestep in zip(self.agents, self.timesteps)]
     if self.timesteps[0].last():
       self._episode_ended = True
-      return ts.termination(np.array([self.timesteps[0].observation.score_cumulative["score"]], dtype=np.int32), self.timesteps[0].observation.score_cumulative["score"]) #TODO: Fix this
+      return ts.termination(np.array([self.timesteps[0].observation], dtype=named_array.NamedDict), self.timesteps[0].observation.score_cumulative["score"]) #TODO: Fix this
     self.timesteps = self.env.step(actions)
     return ts.transition(
-        np.array([self.timesteps[0].observation.score_cumulative["score"]], dtype=np.int32), reward=0.0, discount=1.0) #TODO: Fix this
+        np.array([self.timesteps[0].observation], dtype=named_array.NamedDict), reward=0.0, discount=1.0) #TODO: Fix this
 
 
 def main(unused_argv):
