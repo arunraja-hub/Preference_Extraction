@@ -33,6 +33,8 @@ from pysc2.lib import stopwatch
 
 from absl import logging
 
+# based on https://github.com/deepmind/pysc2/blob/master/pysc2/bin/agent.py and https://github.com/deepmind/pysc2/blob/master/pysc2/env/run_loop.py
+
 FLAGS = flags.FLAGS
 flags.DEFINE_bool("render", True, "Whether to render with pygame.")
 point_flag.DEFINE_point("feature_screen_size", "84",
@@ -154,7 +156,7 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
     logging.info("Score is: ")
     logging.info(self.timesteps[0].observation.score_cumulative["score"])
     return ts.transition(
-        np.array([self.timesteps[0].observation.score_cumulative["score"]], dtype=np.int32), reward=0.0, discount=1.0)
+        np.array([self.timesteps[0].observation.score_cumulative["score"]], dtype=np.int32), reward=self.timesteps[0].reward, discount=self.timesteps[0].discount)
 
 
 def main(unused_argv):
