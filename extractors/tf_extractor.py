@@ -57,6 +57,9 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
             if ix >= 0:
                 self.model.layers[ix].trainable = True
 
+def get_layer_sizes(first_size, last_size, num_layers):
+    return np.linspace(first_size, last_size, num_layers, dtype=np.int32)
+
 def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
     layers = []
     for layer_size in fc_layer_sizes:
@@ -68,7 +71,7 @@ def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
     return layers
 
 @gin.configurable
-def cnn_from_obs(input_shape, conv_layer_params, fc_layer_sizes, reg_amount, drop_rate, pick_random_col_ch=False, pooling=False):
+def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n, fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, pick_random_col_ch=False, pooling=False):
     """
        Simple Convolutional Neural Network
        that extracts preferences from observations
@@ -78,18 +81,19 @@ def cnn_from_obs(input_shape, conv_layer_params, fc_layer_sizes, reg_amount, dro
          # layer to get one of the color channels. It works better than using all of them in the gridworld
         layers.append(tf.keras.layers.Lambda(lambda x: tf.expand_dims(
             x[:,:,:,tf.random.uniform((), 0,4, tf.int32)], 3), input_shape=input_shape))
-    
-    for ix, layer_params in enumerate(conv_layer_params):
-        filters, kernel_size, stride = layer_params
-        layers.append(tf.keras.layers.Conv2D(filters, kernel_size, strides=stride, activation='relu',
+
+    conv_layer_sizes = get_layer_sizes(cnn_first_size, cnn_last_size, cnn_num_layers)
+    for i, layer_size in enumerate(conv_layer_sizes):
+        stride = ((i+1) % cnn_stride_every_n)*-1 + 2
+        layers.append(tf.keras.layers.Conv2D(layer_size, 3, strides=stride, activation='relu',
                                              kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
-        layers.append(tf.keras.layers.Dropout(drop_rate))
-    
+
     if pooling:
         layers.append(tf.keras.layers.GlobalAveragePooling2D())
 
     layers.append(tf.keras.layers.Flatten())
 
+    fc_layer_sizes = get_layer_sizes(fc_first_size, fc_last_size, fc_num_layers)
     layers.extend(get_dense_layers(fc_layer_sizes, reg_amount, drop_rate))
 
     model = tf.keras.models.Sequential(layers)
@@ -178,7 +182,7 @@ class TfExtractor(object):
         if do_summary:
             model.summary()
             print("best train accuracy:", best_stats.bestTrain)
-            print("Number of epochs:", best_stats.num_epochs)
+            print("Number of epochs:", best_stats.num_epochs, flush=True)
         
         return best_stats.bestLogs
 
@@ -209,9 +213,8 @@ class TfExtractor(object):
         }
 
     def train(self, xs, ys):
-        
         metrics = self.multiple_train_ave(xs, ys)
-        print(metrics)
+        print(metrics, flush=True)
         
         hpt = hypertune.HyperTune()
         hpt.report_hyperparameter_tuning_metric(
