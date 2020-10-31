@@ -153,7 +153,7 @@ class PySC2Env(py_environment.PyEnvironment):
       return ts.termination(np.array([self.timesteps[0].observation], dtype=named_array.NamedDict), self.timesteps[0].observation.score_cumulative["score"]) #TODO: Fix this
     self.timesteps = self.env.step(actions)
     return ts.transition(
-        np.array([self.timesteps[0].observation], dtype=named_array.NamedDict), reward=0.0, discount=1.0) #TODO: Fix this
+        np.array([self.timesteps[0].observation], dtype=named_array.NamedDict), reward=self.timesteps[0].reward, discount=self.timesteps[0].discount) #TODO: Fix this
 
 
 def main(unused_argv):
