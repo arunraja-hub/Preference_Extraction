@@ -57,9 +57,18 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
             if ix >= 0:
                 self.model.layers[ix].trainable = True
 
+def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
+    layers = []
+    for layer_size in fc_layer_sizes:
+        layers.append(tf.keras.layers.Dense(layer_size, activation='relu',
+                                              kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+        layers.append(tf.keras.layers.Dropout(drop_rate))
+    layers.append(tf.keras.layers.Dense(1, activation='sigmoid', kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+
+    return layers
 
 @gin.configurable
-def cnn_from_obs(input_shape, reg_amount, drop_rate, pick_random_col_ch, conv_layer_params, pooling):
+def cnn_from_obs(input_shape, conv_layer_params, fc_layer_sizes, reg_amount, drop_rate, pick_random_col_ch=False, pooling=False):
     """
        Simple Convolutional Neural Network
        that extracts preferences from observations
@@ -71,22 +80,19 @@ def cnn_from_obs(input_shape, reg_amount, drop_rate, pick_random_col_ch, conv_la
             x[:,:,:,tf.random.uniform((), 0,4, tf.int32)], 3), input_shape=input_shape))
     
     for ix, layer_params in enumerate(conv_layer_params):
-        ch, krnl, strd = layer_params
-        if ix == 0 and len(layers) == 0:
-            layers.append(tf.keras.layers.Conv2D(ch, krnl, input_shape=input_shape, strides=strd, activation='relu',
-                                                 kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
-        else:
-            layers.append(tf.keras.layers.Conv2D(ch, krnl, strides=strd, activation='relu',
-                                                 kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+        filters, kernel_size, stride = layer_params
+        layers.append(tf.keras.layers.Conv2D(filters, kernel_size, strides=stride, activation='relu',
+                                             kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+        layers.append(tf.keras.layers.Dropout(drop_rate))
     
     if pooling:
         layers.append(tf.keras.layers.GlobalAveragePooling2D())
-    
-    model = tf.keras.models.Sequential(layers + [
-        tf.keras.layers.Flatten(),
-        tf.keras.layers.Dropout(drop_rate),
-        tf.keras.layers.Dense(1, activation='sigmoid', kernel_regularizer=tf.keras.regularizers.l2(reg_amount))
-    ])
+
+    layers.append(tf.keras.layers.Flatten())
+
+    layers.extend(get_dense_layers(fc_layer_sizes, reg_amount, drop_rate))
+
+    model = tf.keras.models.Sequential(layers)
 
     model.compile(optimizer=tf.keras.optimizers.Adam(.01), loss='binary_crossentropy',
                   metrics=['accuracy', tf.keras.metrics.AUC()])
@@ -97,26 +103,22 @@ def reset_model_weights(model):
     for keras_layer in model.layers:
         if len(keras_layer.weights) > 0:
             weights = keras_layer.kernel_initializer(shape=keras_layer.weights[0].shape)
-            biases = keras_layer.kernel_initializer(shape=keras_layer.weights[1].shape)
+            biases = keras_layer.bias_initializer(shape=keras_layer.weights[1].shape)
             keras_layer.set_weights([weights, biases])
 
 @gin.configurable            
 def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, 
-                    layer_sizes, reg_amount, drop_rate, randomize_weights):
+                    fc_layer_sizes, reg_amount, drop_rate, randomize_weights):
     """
         Builds a network to extract preferences
         From the RL agent originally trained in the enviroment
     """
     agent = tf.keras.models.load_model(agent_path)
-    layers = []
-    for ix, layer_size in enumerate(layer_sizes):
-        layers.append(tf.keras.layers.Dense(layer_size, activation='relu',
-                      kernel_regularizer=tf.keras.regularizers.l2(reg_amount), name='post_agent_{}'.format(ix)))
-        layers.append(tf.keras.layers.Dropout(drop_rate))
-            
     for ix, _ in enumerate(agent.layers[:agent_last_layer]):
         agent.layers[ix].trainable = ix not in agent_freezed_layers
-    
+
+    layers = get_dense_layers(fc_layer_sizes, reg_amount, drop_rate)
+
     model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers + [
         tf.keras.layers.Dense(1, activation='sigmoid', 
         kernel_regularizer=tf.keras.regularizers.l2(reg_amount), name='output')])
@@ -179,7 +181,8 @@ class TfExtractor(object):
             print("Number of epochs:", best_stats.num_epochs)
         
         return best_stats.bestLogs
-    
+
+    @gin.configurable
     def multiple_train_ave(self, xs, ys, do_summary):
         """
             Trains the model multiple times with the same parameters and returns the average metrics
@@ -205,9 +208,9 @@ class TfExtractor(object):
             "val_accuracy_std": np.std(all_val_accuracy)
         }
 
-    def train(self, xs, ys, do_summary = True):
+    def train(self, xs, ys):
         
-        metrics = self.multiple_train_ave(xs, ys, do_summary)
+        metrics = self.multiple_train_ave(xs, ys)
         print(metrics)
         
         hpt = hypertune.HyperTune()
