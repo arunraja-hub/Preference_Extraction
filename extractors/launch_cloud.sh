@@ -1,8 +1,7 @@
 # Usage:
 # Follow instructions at the Before you begin section of https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin
 # chmod +x launch_cloud.sh
-# ./launch_cloud.sh job_name tf 0
-# ./launch_cloud.sh job_name tf 1
+# ./launch_cloud.sh job_name tf.gin hptuning_config_tf_baseline.yaml
 # for hparam tune.
 
 # This launches a new training on google cloud.
@@ -24,14 +23,8 @@ docker push $IMAGE_URI
 echo "Container built. You can test localy with"
 echo "docker run $IMAGE_URI $GIN_CONFIG"
 
-if [ -z "$3" ]
-then
-  CLOUD_CONFIG=""
-else
-  CLOUD_CONFIG="--config $3"
-fi
-
-GIN_CONFIG="--gin_file $2"
+CLOUD_CONFIG="--config configs/$3"
+GIN_CONFIG="--gin_file configs/$2"
 
 gcloud beta ai-platform jobs submit training $JOB_NAME \
   --region us-west1 \

@@ -71,7 +71,8 @@ def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
     return layers
 
 @gin.configurable
-def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n, fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, pick_random_col_ch=False, pooling=False):
+def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n,
+                 fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate, pick_random_col_ch=False, pooling=False):
     """
        Simple Convolutional Neural Network
        that extracts preferences from observations
@@ -84,7 +85,10 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
 
     conv_layer_sizes = get_layer_sizes(cnn_first_size, cnn_last_size, cnn_num_layers)
     for i, layer_size in enumerate(conv_layer_sizes):
-        stride = ((i+1) % cnn_stride_every_n)*-1 + 2
+        if ((i+1) % cnn_stride_every_n) == 0:
+            stride = 2
+        else:
+            stride = 1
         layers.append(tf.keras.layers.Conv2D(layer_size, 3, strides=stride, activation='relu',
                                              kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
 
@@ -98,7 +102,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
 
     model = tf.keras.models.Sequential(layers)
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(.01), loss='binary_crossentropy',
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate), loss='binary_crossentropy',
                   metrics=['accuracy', tf.keras.metrics.AUC()])
 
     return model

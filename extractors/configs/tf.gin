@@ -12,8 +12,8 @@ TfExtractor.extractor_fn = @cnn_from_obs
 TfExtractor.num_train = 50
 TfExtractor.num_val = 500
 TfExtractor.num_repeat = 10
-TfExtractor.epochs = 100
-TfExtractor.batch_size = 32
+TfExtractor.epochs = 200
+TfExtractor.batch_size = 512
 TfExtractor.slowly_unfreezing = True
 
 SlowlyUnfreezing.unfreze_every_n_epochs = 10
@@ -31,6 +31,7 @@ cnn_from_obs.fc_num_layers = 2
 cnn_from_obs.pooling = False
 cnn_from_obs.reg_amount = 0
 cnn_from_obs.drop_rate = 0
+cnn_from_obs.learning_rate = .01
 
 agent_extractor.agent_path = %AGENT_DIR
 agent_extractor.agent_last_layer = 5
