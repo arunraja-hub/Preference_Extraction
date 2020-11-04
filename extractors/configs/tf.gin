@@ -8,10 +8,11 @@ data_pipeline.rebalance = True
 
 extractor_type.extractor = @TfExtractor
 
+Extractor.num_repeat = 10
+
 TfExtractor.extractor_fn = @cnn_from_obs
 TfExtractor.num_train = 50
 TfExtractor.num_val = 500
-TfExtractor.num_repeat = 10
 TfExtractor.epochs = 200
 TfExtractor.batch_size = 512
 TfExtractor.slowly_unfreezing = True

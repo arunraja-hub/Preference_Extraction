@@ -16,6 +16,7 @@ import torch.nn.functional as F
 import torch.autograd as autograd
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
+import extractor
 
 import hypertune
 
@@ -122,7 +123,7 @@ class AgentModel(nn.Module):
         return x.flatten()
     
 @gin.configurable
-class TorchExtractor(object):
+class TorchExtractor(extractor.Extractor):
     
     def __init__(self,
                  agent_path,
@@ -131,15 +132,15 @@ class TorchExtractor(object):
                  randomize_weights,
                  num_train,
                  num_val,
-                 num_repeat = 5,
                  epochs = 500,
                  batch_size = 128,
                  learning_rate = 1e-2,
                  weight_decay = 0):
-        
+        super().__init__()
+        print("Using TorchExtractor", flush=True)
+
         self.num_train = num_train
         self.num_val = num_val
-        self.num_repeat = num_repeat
         self.epochs = epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -282,30 +283,24 @@ class TorchExtractor(object):
         accuracy, auc = self.compute_metrics(predictions, true_labels)
 
         return test_loss.item(), accuracy, auc
-    
-    def get_data_sample(self, xs, ys):
-        
-        randomize = np.arange(len(xs))
-        np.random.shuffle(randomize)
-        xs = xs[randomize]
-        ys = ys[randomize]
-        xs = np.rollaxis(np.array(xs), 3, 1) # Torch wants channel-first
-        
+
+    def get_data_loaders(self, xs_train, ys_train, xs_val, ys_val):
+        xs_train = np.rollaxis(np.array(xs_train), 3, 1)  # Torch wants channel-first
+        xs_val = np.rollaxis(np.array(xs_val), 3, 1)  # Torch wants channel-first
+
         tr_data_loader = torch.utils.data.DataLoader(
-            torch.utils.data.TensorDataset(torch.Tensor(xs[:self.num_train]), torch.Tensor(ys[:self.num_train])),
+            torch.utils.data.TensorDataset(torch.Tensor(xs_train), torch.Tensor(ys_train)),
             batch_size=self.batch_size)
 
         val_data_loader = torch.utils.data.DataLoader(
-            torch.utils.data.TensorDataset(torch.Tensor(xs[self.num_train:self.num_val]),
-                                           torch.Tensor(ys[self.num_train:self.num_val])),
+            torch.utils.data.TensorDataset(torch.Tensor(xs_val),
+                                           torch.Tensor(ys_val)),
             batch_size=self.batch_size)
 
-        return tr_data_loader, val_data_loader, xs[:self.num_train]
+        return tr_data_loader, val_data_loader
 
-    
-    def single_train_pass(self, xs, ys):
-        
-        tr_data_loader, val_data_loader, x_train = self.get_data_sample(xs, ys)
+    def train_single(self, xs_train, ys_train, xs_val, ys_val, do_summary):
+        tr_data_loader, val_data_loader = self.get_data_loaders(xs_train, ys_train, xs_val, ys_val)
         
         # Normalise last layer using training data
         # if hasattr(model, 'layer_to_norm'):
@@ -350,28 +345,11 @@ class TorchExtractor(object):
             test_accs.append(test_accuracy)
             test_aucs.append(test_auc)
 
-        return {'train_loss': train_losses, 'val_loss': test_losses, 
-                'train_accuracy': train_accs, 'val_accuracy': test_accs,
-                'train_auc': train_aucs, 'val_auc': test_aucs}
+        metrics = {'train_loss': train_losses[-1], 'val_loss': test_losses[-1],
+                'train_accuracy': train_accs[-1], 'val_accuracy': test_accs[-1],
+                'train_auc': train_aucs[-1], 'val_auc': test_aucs[-1]}
 
-    def train(self, xs, ys):
-        
-        averaged_results = {}
-        for run_ix in range(self.num_repeat):
-            print(f'Train pass no. {run_ix+1}')
-            results = self.single_train_pass(xs, ys)       
-        
-            for res in results:
-                if len(results[res]) > 0:
-                    if res not in averaged_results:
-                        averaged_results[res] = [results[res][-1]]
-                    else:
-                        averaged_results[res].append(results[res][-1])         
-    
-        metrics = {('mean_'+x): sum(averaged_results[x]) / self.num_repeat for x in averaged_results}
-        print(metrics)
-        
-        hpt = hypertune.HyperTune()
-        hpt.report_hyperparameter_tuning_metric(
-            hyperparameter_metric_tag='mean_val_auc',
-            metric_value=metrics['mean_val_auc'])
+        if do_summary:
+            print(metrics, flush=True)
+
+        return metrics
