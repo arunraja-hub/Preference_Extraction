@@ -171,7 +171,7 @@ class TfExtractor(object):
         self.batch_size = batch_size
         self.slowly_unfreezing = slowly_unfreezing
         
-    def train_best_logs(self, xs, ys, do_summary):
+    def train_single_shuffle(self, xs, ys, do_summary):
         """
             Trains the model and retruns the logs of the best epoch.
             Randomly splits the train and val data before training.
@@ -187,6 +187,9 @@ class TfExtractor(object):
         xs_val = xs[self.num_train:self.num_train+self.num_val]
         ys_val = ys[self.num_train:self.num_train+self.num_val]
 
+        return self.train_single(xs_train, ys_train, xs_val, ys_val, do_summary)
+
+    def train_single(self, xs_train, ys_train, xs_val, ys_val, do_summary):
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0)
         best_stats = BestStats()
         callbacks = [early_stopping, best_stats]
@@ -201,11 +204,11 @@ class TfExtractor(object):
             model.summary()
             print("best train accuracy:", best_stats.bestTrain)
             print("Number of epochs:", best_stats.num_epochs, flush=True)
-        
-        return best_stats.bestLogs
+
+        return {'val_auc': get_val_auc(best_stats.bestLogs), 'val_accuracy': best_stats.bestLogs.get('val_accuracy')}
 
     @gin.configurable
-    def multiple_train_ave(self, xs, ys, do_summary):
+    def train(self, xs, ys, do_summary):
         """
             Trains the model multiple times with the same parameters and returns the average metrics
         """
@@ -214,27 +217,23 @@ class TfExtractor(object):
         all_val_accuracy = []
 
         for i in range(self.num_repeat):
-            logs = self.train_best_logs(xs, ys, do_summary=do_summary)
-            all_val_auc.append(get_val_auc(logs))
-            all_val_accuracy.append(logs.get('val_accuracy'))
-            do_summary = False 
+            single_train_metrics = self.train_single_shuffle(xs, ys, do_summary=do_summary and (i==0))
+            all_val_auc.append(single_train_metrics['val_auc'])
+            all_val_accuracy.append(single_train_metrics['val_accuracy'])
         
-        mean_val_auc = np.mean(all_val_auc)
-        mean_val_accuracy = np.mean(all_val_accuracy)
-        
-        return {
-            "mean_val_auc": mean_val_auc,
-            "mean_val_accuracy": mean_val_accuracy,
-            "metric": (mean_val_auc + mean_val_accuracy) / 2.0,
+        metrics = {
+            "mean_val_auc": np.mean(all_val_auc),
+            "mean_val_accuracy": np.mean(all_val_accuracy),
             "val_auc_std": np.std(all_val_auc),
             "val_accuracy_std": np.std(all_val_accuracy)
         }
 
-    def train(self, xs, ys):
-        metrics = self.multiple_train_ave(xs, ys)
-        print(metrics, flush=True)
+        if do_summary:
+            print(metrics, flush=True)
         
         hpt = hypertune.HyperTune()
         hpt.report_hyperparameter_tuning_metric(
             hyperparameter_metric_tag='mean_val_auc',
             metric_value=metrics['mean_val_auc'])
+
+        return metrics

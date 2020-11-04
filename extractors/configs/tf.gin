@@ -41,4 +41,4 @@ agent_extractor.reg_amount = 0
 agent_extractor.drop_rate = 0
 agent_extractor.randomize_weights = True
 
-multiple_train_ave.do_summary = True
+train.do_summary = True
