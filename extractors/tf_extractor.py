@@ -116,7 +116,7 @@ def reset_model_weights(model):
 
 @gin.configurable            
 def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, 
-                    fc_layer_sizes, reg_amount, drop_rate, randomize_weights):
+                    first_size, last_size, num_layers, reg_amount, drop_rate, randomize_weights):
     """
         Builds a network to extract preferences
         From the RL agent originally trained in the enviroment
@@ -125,6 +125,7 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
     for ix, _ in enumerate(agent.layers[:agent_last_layer]):
         agent.layers[ix].trainable = ix not in agent_freezed_layers
 
+    fc_layer_sizes = get_layer_sizes(first_size, last_size, num_layers)
     layers = get_dense_layers(fc_layer_sizes, reg_amount, drop_rate)
 
     model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers + [

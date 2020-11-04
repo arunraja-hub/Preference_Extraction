@@ -5,8 +5,25 @@ trainingInput:
     goal: MAXIMIZE
     hyperparameterMetricTag: mean_val_auc
     maxTrials: 60
-    maxParallelTrials: 4
+    maxParallelTrials: 5
     params:
+      - parameterName: gin_bindings=agent_extractor.first_size
+        type: INTEGER
+        minValue: 8
+        maxValue: 128
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=agent_extractor.last_size
+        type: INTEGER
+        minValue: 4
+        maxValue: 32
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=agent_extractor.num_layers
+        type: INTEGER
+        minValue: 0
+        maxValue: 4
+        scaleType: UNIT_LINEAR_SCALE
 
       - parameterName: gin_bindings=AGENT_DIR
         type: CATEGORICAL
@@ -55,13 +72,6 @@ trainingInput:
         categoricalValues:
         - "True"
         - "False"
-
-      - parameterName: gin_bindings=agent_extractor.layer_sizes
-        type: CATEGORICAL
-        categoricalValues:
-        - "(128, 64)"
-        - "(64, 32)"
-        - "(32,)"
         
       - parameterName: gin_bindings=agent_extractor.reg_amount
         type: DOUBLE
