@@ -7,8 +7,6 @@ import gin.tf.external_configurables
 
 import numpy as np
 
-import hypertune
-
 import matplotlib.pyplot as plt
 import random
 

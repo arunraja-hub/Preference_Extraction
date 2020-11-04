@@ -18,8 +18,6 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 import extractor
 
-import hypertune
-
 class GetSubnet(autograd.Function):
     """
         Original code from 'What's hidden in a randomly weighted neural network?'
