@@ -9,6 +9,9 @@ import numpy as np
 
 import hypertune
 
+import matplotlib.pyplot as plt
+import random
+
 def get_val_auc(logs):
     for key in logs:
         if key.startswith('val_auc'):
@@ -114,6 +117,15 @@ def reset_model_weights(model):
             biases = keras_layer.bias_initializer(shape=keras_layer.weights[1].shape)
             keras_layer.set_weights([weights, biases])
 
+def print_data(xs, ys):
+    """This function can be used to double check the data."""
+    for _ in range(10):
+        i = random.randint(0, len(xs)-1)
+        print(ys[i])
+        plt.imshow(xs[i,:,:,:3])
+        plt.show()
+    print("="*10)
+
 @gin.configurable            
 def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, 
                     fc_layer_sizes, reg_amount, drop_rate, randomize_weights):
@@ -169,10 +181,12 @@ class TfExtractor(object):
         np.random.shuffle(randomize)
         xs = xs[randomize]
         ys = ys[randomize]
-        
+
+        xs_train = xs[:self.num_train]
+        ys_train = ys[:self.num_train]
         xs_val = xs[self.num_train:self.num_train+self.num_val]
         ys_val = ys[self.num_train:self.num_train+self.num_val]
-        
+
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0)
         best_stats = BestStats()
         callbacks = [early_stopping, best_stats]
@@ -180,7 +194,7 @@ class TfExtractor(object):
             callbacks += [SlowlyUnfreezing()]
 
         model = self.extractor_fn()
-        model.fit(xs[:self.num_train], ys[:self.num_train], epochs=self.epochs, batch_size=self.batch_size,
+        model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
                   callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
 
         if do_summary:
