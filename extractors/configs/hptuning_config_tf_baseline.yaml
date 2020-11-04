@@ -4,7 +4,7 @@ trainingInput:
   hyperparameters:
     goal: MAXIMIZE
     hyperparameterMetricTag: mean_val_auc
-    maxTrials: 100
+    maxTrials: 60
     maxParallelTrials: 5
     params:
       - parameterName: gin_bindings=TfExtractor.extractor_fn

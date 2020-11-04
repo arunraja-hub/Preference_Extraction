@@ -2,6 +2,7 @@
 # Follow instructions at the Before you begin section of https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin
 # chmod +x launch_cloud.sh
 # ./launch_cloud.sh job_name tf.gin hptuning_config_tf_baseline.yaml
+# ./launch_cloud.sh job_name torch.gin hptuning_config_torch.yaml
 # for hparam tune.
 
 # This launches a new training on google cloud.
@@ -27,7 +28,7 @@ CLOUD_CONFIG="--config configs/$3"
 GIN_CONFIG="--gin_file configs/$2"
 
 gcloud beta ai-platform jobs submit training $JOB_NAME \
-  --region us-west1 \
+  --region us-central1 \
   --master-image-uri $IMAGE_URI \
   $CLOUD_CONFIG \
   -- $GIN_CONFIG

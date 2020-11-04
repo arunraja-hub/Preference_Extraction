@@ -7,9 +7,6 @@ import gin.tf.external_configurables
 
 import numpy as np
 
-import matplotlib.pyplot as plt
-import random
-
 import extractor
 
 def get_val_auc(logs):
@@ -116,15 +113,6 @@ def reset_model_weights(model):
             weights = keras_layer.kernel_initializer(shape=keras_layer.weights[0].shape)
             biases = keras_layer.bias_initializer(shape=keras_layer.weights[1].shape)
             keras_layer.set_weights([weights, biases])
-
-def print_data(xs, ys):
-    """This function can be used to double check the data."""
-    for _ in range(10):
-        i = random.randint(0, len(xs)-1)
-        print(ys[i])
-        plt.imshow(xs[i,:,:,:3])
-        plt.show()
-    print("="*10)
 
 @gin.configurable            
 def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, 
