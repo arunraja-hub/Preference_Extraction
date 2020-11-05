@@ -7,10 +7,7 @@ import gin.tf.external_configurables
 
 import numpy as np
 
-import hypertune
-
-import matplotlib.pyplot as plt
-import random
+import extractor
 
 def get_val_auc(logs):
     for key in logs:
@@ -117,15 +114,6 @@ def reset_model_weights(model):
             biases = keras_layer.bias_initializer(shape=keras_layer.weights[1].shape)
             keras_layer.set_weights([weights, biases])
 
-def print_data(xs, ys):
-    """This function can be used to double check the data."""
-    for _ in range(10):
-        i = random.randint(0, len(xs)-1)
-        print(ys[i])
-        plt.imshow(xs[i,:,:,:3])
-        plt.show()
-    print("="*10)
-
 @gin.configurable            
 def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, 
                     fc_layer_sizes, reg_amount, drop_rate, randomize_weights):
@@ -152,41 +140,26 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
     return model
 
 @gin.configurable
-class TfExtractor(object):
+class TfExtractor(extractor.Extractor):
     
     def __init__(self,
                  extractor_fn,
                  num_train,
                  num_val,
-                 num_repeat = 5,
                  slowly_unfreezing = False,
                  epochs = 500,
                  batch_size = 128):
+        super().__init__()
+        print("Using TfExtractor", flush=True)
         
         self.extractor_fn = extractor_fn
         self.num_train = num_train
         self.num_val = num_val
-        self.num_repeat = num_repeat
         self.epochs = epochs
         self.batch_size = batch_size
         self.slowly_unfreezing = slowly_unfreezing
-        
-    def train_best_logs(self, xs, ys, do_summary):
-        """
-            Trains the model and retruns the logs of the best epoch.
-            Randomly splits the train and val data before training.
-        """
-        
-        randomize = np.arange(len(xs))
-        np.random.shuffle(randomize)
-        xs = xs[randomize]
-        ys = ys[randomize]
 
-        xs_train = xs[:self.num_train]
-        ys_train = ys[:self.num_train]
-        xs_val = xs[self.num_train:self.num_train+self.num_val]
-        ys_val = ys[self.num_train:self.num_train+self.num_val]
-
+    def train_single(self, xs_train, ys_train, xs_val, ys_val, do_summary):
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0)
         best_stats = BestStats()
         callbacks = [early_stopping, best_stats]
@@ -201,40 +174,5 @@ class TfExtractor(object):
             model.summary()
             print("best train accuracy:", best_stats.bestTrain)
             print("Number of epochs:", best_stats.num_epochs, flush=True)
-        
-        return best_stats.bestLogs
 
-    @gin.configurable
-    def multiple_train_ave(self, xs, ys, do_summary):
-        """
-            Trains the model multiple times with the same parameters and returns the average metrics
-        """
-        
-        all_val_auc = []
-        all_val_accuracy = []
-
-        for i in range(self.num_repeat):
-            logs = self.train_best_logs(xs, ys, do_summary=do_summary)
-            all_val_auc.append(get_val_auc(logs))
-            all_val_accuracy.append(logs.get('val_accuracy'))
-            do_summary = False 
-        
-        mean_val_auc = np.mean(all_val_auc)
-        mean_val_accuracy = np.mean(all_val_accuracy)
-        
-        return {
-            "mean_val_auc": mean_val_auc,
-            "mean_val_accuracy": mean_val_accuracy,
-            "metric": (mean_val_auc + mean_val_accuracy) / 2.0,
-            "val_auc_std": np.std(all_val_auc),
-            "val_accuracy_std": np.std(all_val_accuracy)
-        }
-
-    def train(self, xs, ys):
-        metrics = self.multiple_train_ave(xs, ys)
-        print(metrics, flush=True)
-        
-        hpt = hypertune.HyperTune()
-        hpt.report_hyperparameter_tuning_metric(
-            hyperparameter_metric_tag='mean_val_auc',
-            metric_value=metrics['mean_val_auc'])
+        return {'val_auc': get_val_auc(best_stats.bestLogs), 'val_accuracy': best_stats.bestLogs.get('val_accuracy')}

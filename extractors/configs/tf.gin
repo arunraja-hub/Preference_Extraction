@@ -8,10 +8,12 @@ data_pipeline.rebalance = True
 
 extractor_type.extractor = @TfExtractor
 
+extractor.train.do_summary = True
+Extractor.num_repeat = 10
+
 TfExtractor.extractor_fn = @cnn_from_obs
 TfExtractor.num_train = 50
 TfExtractor.num_val = 500
-TfExtractor.num_repeat = 10
 TfExtractor.epochs = 200
 TfExtractor.batch_size = 512
 TfExtractor.slowly_unfreezing = True
@@ -40,5 +42,3 @@ agent_extractor.fc_layer_sizes = (128, 64)
 agent_extractor.reg_amount = 0
 agent_extractor.drop_rate = 0
 agent_extractor.randomize_weights = True
-
-multiple_train_ave.do_summary = True
