@@ -11,6 +11,11 @@ trainingInput:
         type: CATEGORICAL
         categoricalValues:
         - "@cnn_from_obs"
+        
+      - parameterName: gin_bindings=extractor.train.agents
+        type: CATEGORICAL
+        categoricalValues:
+        - "[]"
 
       - parameterName: gin_bindings=cnn_from_obs.learning_rate
         type: DOUBLE

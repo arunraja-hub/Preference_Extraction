@@ -159,14 +159,18 @@ class TfExtractor(extractor.Extractor):
         self.batch_size = batch_size
         self.slowly_unfreezing = slowly_unfreezing
 
-    def train_single(self, xs_train, ys_train, xs_val, ys_val, do_summary):
+    def train_single(self, xs_train, ys_train, xs_val, ys_val, agent_path, do_summary):
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0)
         best_stats = BestStats()
         callbacks = [early_stopping, best_stats]
         if self.slowly_unfreezing:
             callbacks += [SlowlyUnfreezing()]
-
-        model = self.extractor_fn()
+        
+        if agent_path is not None:
+            model = self.extractor_fn(agent_path)
+        else:
+            model = self.extractor_fn()
+            
         model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
                   callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
 

@@ -124,7 +124,6 @@ class AgentModel(nn.Module):
 class TorchExtractor(extractor.Extractor):
     
     def __init__(self,
-                 agent_path,
                  input_shape,
                  subnet_k,
                  randomize_weights,
@@ -149,9 +148,10 @@ class TorchExtractor(extractor.Extractor):
         torch.backends.cudnn.benchmark = False
         use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
-        
         self.model = None
-        self.create_agent_model(agent_path, input_shape, subnet_k, randomize_weights)
+        self.input_shape = input_shape
+        self.subnet_k = subnet_k
+        self.randomize_weights = randomize_weights
         
     def create_agent_model(self, agent_path, input_shape, subnet_k, randomize_weights):
         
@@ -297,7 +297,9 @@ class TorchExtractor(extractor.Extractor):
 
         return tr_data_loader, val_data_loader
 
-    def train_single(self, xs_train, ys_train, xs_val, ys_val, do_summary):
+    def train_single(self, xs_train, ys_train, xs_val, ys_val, agent_path, do_summary):
+        
+        self.create_agent_model(agent_path, self.input_shape, self.subnet_k, self.randomize_weights)
         tr_data_loader, val_data_loader = self.get_data_loaders(xs_train, ys_train, xs_val, ys_val)
         
         # Normalise last layer using training data

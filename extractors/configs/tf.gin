@@ -1,4 +1,3 @@
-AGENT_DIR = "gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000"
 DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_10000.pkl"
 INPUT_SHAPE = None
 
@@ -7,14 +6,17 @@ data_pipeline.env = "Doom"
 data_pipeline.rebalance = True
 
 extractor_type.extractor = @TfExtractor
-
-extractor.train.do_summary = True
+extractor.train.agents = [
+    'gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000',
+    'gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000',
+    'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000']
+extractor.train_average_over_repeats.do_summary = True
 Extractor.num_repeat = 10
 
 TfExtractor.extractor_fn = @cnn_from_obs
 TfExtractor.num_train = 50
 TfExtractor.num_val = 500
-TfExtractor.epochs = 200
+TfExtractor.epochs = 100
 TfExtractor.batch_size = 512
 TfExtractor.slowly_unfreezing = True
 
@@ -35,7 +37,6 @@ cnn_from_obs.reg_amount = 0
 cnn_from_obs.drop_rate = 0
 cnn_from_obs.learning_rate = .01
 
-agent_extractor.agent_path = %AGENT_DIR
 agent_extractor.agent_last_layer = 5
 agent_extractor.agent_freezed_layers = ()
 agent_extractor.fc_layer_sizes = (128, 64)

@@ -6,18 +6,20 @@ data_pipeline.data_path = %DATA_PATH
 data_pipeline.env = "Doom"
 data_pipeline.rebalance = True
 
-extractor.train.do_summary = True
-Extractor.num_repeat = 10
-
 extractor_type.extractor = @TorchExtractor
+extractor.train.agents = [
+    'gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000',
+    'gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000',
+    'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000']
+extractor.train_average_over_repeats.do_summary = True
+Extractor.num_repeat = 8
 
-TorchExtractor.agent_path = %AGENT_DIR
 TorchExtractor.input_shape = %INPUT_SHAPE
 TorchExtractor.subnet_k = 0.75
 TorchExtractor.randomize_weights = False
 TorchExtractor.num_train = 50
 TorchExtractor.num_val = 500
 TorchExtractor.epochs = 100
-TorchExtractor.batch_size = 32
+TorchExtractor.batch_size = 512
 TorchExtractor.learning_rate = 0.02
 TorchExtractor.weight_decay = 0
