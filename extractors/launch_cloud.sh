@@ -1,8 +1,9 @@
 # Usage:
 # Follow instructions at the Before you begin section of https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin
 # chmod +x launch_cloud.sh
-# ./launch_cloud.sh job_name tf.gin hptuning_config_tf_baseline.yaml
-# ./launch_cloud.sh job_name torch.gin hptuning_config_torch.yaml
+# ./launch_cloud.sh baseline tf.gin hptuning_config_tf_baseline.yaml
+# ./launch_cloud.sh subnet torch.gin hptuning_config_torch.yaml
+# ./launch_cloud.sh agent_extract tf.gin hptuning_config_tf.yaml
 # for hparam tune.
 
 # This launches a new training on google cloud.

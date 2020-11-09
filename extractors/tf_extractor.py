@@ -128,9 +128,7 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
     fc_layer_sizes = get_layer_sizes(first_size, last_size, num_layers)
     layers = get_dense_layers(fc_layer_sizes, reg_amount, drop_rate)
 
-    model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers + [
-        tf.keras.layers.Dense(1, activation='sigmoid', 
-        kernel_regularizer=tf.keras.regularizers.l2(reg_amount), name='output')])
+    model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers)
     
     model.compile(optimizer=tf.keras.optimizers.Adam(.01), loss='binary_crossentropy',
                   metrics=['accuracy', tf.keras.metrics.AUC()])
