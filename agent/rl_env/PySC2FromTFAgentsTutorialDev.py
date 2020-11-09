@@ -33,8 +33,11 @@ from pysc2.lib import stopwatch
 
 from absl import logging
 
-# based on https://github.com/deepmind/pysc2/blob/master/pysc2/bin/agent.py, https://github.com/deepmind/pysc2/blob/master/pysc2/env/run_loop.py
-# and https://github.com/tensorflow/agents/blob/master/docs/tutorials/2_environments_tutorial.ipynb
+""" Enviroment wrapper based on
+    * https://github.com/deepmind/pysc2/blob/master/pysc2/bin/agent.py
+    * https://github.com/deepmind/pysc2/blob/master/pysc2/env/run_loop.py
+    * https://github.com/tensorflow/agents/blob/master/docs/tutorials/2_environments_tutorial.ipynb
+"""
 
 FLAGS = flags.FLAGS
 flags.DEFINE_bool("render", True, "Whether to render with pygame.")
@@ -87,81 +90,89 @@ flags.DEFINE_string("map", "MoveToBeacon", "Name of a map to use.")
 flags.DEFINE_bool("battle_net_map", False, "Use the battle.net map version.")
 flags.mark_flag_as_required("map")
 
+
+
 class PySC2EnvReduced(py_environment.PyEnvironment):
+    
+    def __init__(self):
+        self._observation_spec = array_spec.BoundedArraySpec(
+            shape=(27, 84, 84), dtype=np.int32, minimum=0, name='observation')
+        self._action_spec = array_spec.BoundedArraySpec(
+            shape=(), dtype=np.int32, minimum=0, maximum=1, name='action')
+        self._episode_ended = False
 
-  def __init__(self):
-    self._observation_spec = array_spec.BoundedArraySpec(
-        shape=(27, 84, 84), dtype=np.int32, minimum=0, name='observation')
-    self._episode_ended = False
+        #PySC2 environment initialization code below
+        map_inst = maps.get(FLAGS.map)
+        agent_classes = []
+        players = []
+        agent_module, agent_name = FLAGS.agent.rsplit(".", 1)
+        agent_cls = getattr(importlib.import_module(agent_module), agent_name)
+        agent_classes.append(agent_cls)
+        players.append(sc2_env.Agent(sc2_env.Race[FLAGS.agent_race],
+                                     FLAGS.agent_name or agent_name))
+        if map_inst.players >= 2:
+              if FLAGS.agent2 == "Bot":
+                players.append(sc2_env.Bot(sc2_env.Race[FLAGS.agent2_race],
+                                           sc2_env.Difficulty[FLAGS.difficulty],
+                                           sc2_env.BotBuild[FLAGS.bot_build]))
+        env = sc2_env.SC2Env(
+            map_name=FLAGS.map,
+            battle_net_map=FLAGS.battle_net_map,
+            players=players,
+            agent_interface_format=sc2_env.parse_agent_interface_format(
+                feature_screen=FLAGS.feature_screen_size,
+                feature_minimap=FLAGS.feature_minimap_size,
+                rgb_screen=FLAGS.rgb_screen_size,
+                rgb_minimap=FLAGS.rgb_minimap_size,
+                action_space=FLAGS.action_space,
+                use_feature_units=FLAGS.use_feature_units,
+                use_raw_units=FLAGS.use_raw_units),
+            step_mul=FLAGS.step_mul,
+            game_steps_per_episode=FLAGS.game_steps_per_episode,
+            disable_fog=FLAGS.disable_fog,
+            visualize=False)
+        self.env = available_actions_printer.AvailableActionsPrinter(env)
+        self.agents = [agent_cls() for agent_cls in agent_classes]
+        observation_spec = env.observation_spec()
+        action_spec = env.action_spec()
+        for agent, obs_spec, act_spec in zip(self.agents, observation_spec, action_spec):
+            agent.setup(obs_spec, act_spec)
+        self.timesteps = env.reset()
+        for a in self.agents:
+            a.reset()
 
-    #PySC2 environment initialization code below
-    map_inst = maps.get(FLAGS.map)
-    agent_classes = []
-    players = []
-    agent_module, agent_name = FLAGS.agent.rsplit(".", 1)
-    agent_cls = getattr(importlib.import_module(agent_module), agent_name)
-    agent_classes.append(agent_cls)
-    players.append(sc2_env.Agent(sc2_env.Race[FLAGS.agent_race],
-                                 FLAGS.agent_name or agent_name))
-    if map_inst.players >= 2:
-      if FLAGS.agent2 == "Bot":
-        players.append(sc2_env.Bot(sc2_env.Race[FLAGS.agent2_race],
-                                   sc2_env.Difficulty[FLAGS.difficulty],
-                                   sc2_env.BotBuild[FLAGS.bot_build]))
-    env = sc2_env.SC2Env(
-        map_name=FLAGS.map,
-        battle_net_map=FLAGS.battle_net_map,
-        players=players,
-        agent_interface_format=sc2_env.parse_agent_interface_format(
-            feature_screen=FLAGS.feature_screen_size,
-            feature_minimap=FLAGS.feature_minimap_size,
-            rgb_screen=FLAGS.rgb_screen_size,
-            rgb_minimap=FLAGS.rgb_minimap_size,
-            action_space=FLAGS.action_space,
-            use_feature_units=FLAGS.use_feature_units,
-            use_raw_units=FLAGS.use_raw_units),
-        step_mul=FLAGS.step_mul,
-        game_steps_per_episode=FLAGS.game_steps_per_episode,
-        disable_fog=FLAGS.disable_fog,
-        visualize=False)
-    self.env = available_actions_printer.AvailableActionsPrinter(env)
-    self.agents = [agent_cls() for agent_cls in agent_classes]
-    observation_spec = env.observation_spec()
-    action_spec = env.action_spec()
-    self._action_spec = env.action_spec()
-    for agent, obs_spec, act_spec in zip(self.agents, observation_spec, action_spec):
-      agent.setup(obs_spec, act_spec)
-    self.timesteps = env.reset()
-    for a in self.agents:
-      a.reset()
+        print(type(action_spec[0]))
+        print(action_spec[0].functions[0].args)
+        print(action_spec[0].types)
 
-  def action_spec(self):
-    return self._action_spec
+    def action_spec(self):
+        return self._action_spec
 
-  def observation_spec(self):
-    return self._observation_spec
+    def observation_spec(self):
+        return self._observation_spec
 
-  def _reset(self):
-    #self._state = 0
-    self._episode_ended = False
-    return ts.restart(np.array([self.timesteps[0].observation.feature_screen], dtype=np.int32))
+    def _reset(self):
+        self._episode_ended = False
+        return ts.restart(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32))
 
-  def _step(self, action):
+    def _step(self, action):
+        actions = [agent.step(timestep) for agent, timestep in zip(self.agents, self.timesteps)]
+        if self.timesteps[0].last():
+            self._episode_ended = True
+            return ts.termination(np.array([self.timesteps[0].observation.feature_screen], dtype=np.int32), 
+                                  self.timesteps[0].observation.score_cumulative["score"])
 
-    actions = [agent.step(timestep) for agent, timestep in zip(self.agents, self.timesteps)]
-    if self.timesteps[0].last():
-      self._episode_ended = True
-      return ts.termination(np.array([self.timesteps[0].observation.feature_screen], dtype=np.int32), self.timesteps[0].observation.score_cumulative["score"])
-    #self.timesteps = self.env.step(actions)
-    logging.info("Score is: ")
-    logging.info(self.timesteps[0].observation.score_cumulative["score"])
-    return ts.transition(
-        np.array([self.timesteps[0].observation.feature_screen], dtype=np.int32), reward=self.timesteps[0].reward, discount=self.timesteps[0].discount)
+        self.timesteps = self.env.step(actions)
+        logging.info("Actions taken: {}".format(actions))
+        logging.info("Score is: {}".format(self.timesteps[0].observation.score_cumulative["score"]))
+        return ts.transition(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32), 
+                             reward=self.timesteps[0].reward, discount=self.timesteps[0].discount)
 
 
 def main(unused_argv):
     environment = PySC2EnvReduced()
-    utils.validate_py_environment(environment, episodes=5)
+    utils.validate_py_environment(environment, episodes=1)
 
+    
 if __name__ == "__main__":
-  app.run(main)
+    app.run(main)
