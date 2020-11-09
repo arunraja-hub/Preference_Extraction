@@ -144,8 +144,8 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
             shape=(27, 84, 84), dtype=np.int32, minimum=0, name='observation')
         
         # Action is move_camera (id = 1)
-        func_id = 1
-        arg = [arg.sizes for arg in action_spec[0].functions[func_id].args][0] # fn has only one arg
+        self.func_id = 1
+        arg = [arg.sizes for arg in action_spec[0].functions[self.func_id].args][0] # fn has only one arg
         self._action_spec = array_spec.BoundedArraySpec(
            shape=np.array(arg).shape, dtype=np.int32, minimum=min(arg), maximum=max(arg), name='action')
         
@@ -165,7 +165,7 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
             self._episode_ended = True
             return ts.termination(np.array([self.timesteps[0].observation.feature_screen], dtype=np.int32), 
                                   self.timesteps[0].observation.score_cumulative["score"])
-        action_to_take = [actions.FunctionCall(1, [action])]
+        action_to_take = [actions.FunctionCall(self.func_id, [action])]
         self.timesteps = self.env.step(action_to_take)
         return ts.transition(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32), 
                              reward=self.timesteps[0].reward, discount=self.timesteps[0].discount)
