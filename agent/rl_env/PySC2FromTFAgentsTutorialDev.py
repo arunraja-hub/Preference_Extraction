@@ -30,6 +30,7 @@ from pysc2.env import run_loop
 from pysc2.env import sc2_env
 from pysc2.lib import point_flag
 from pysc2.lib import stopwatch
+from pysc2.lib import actions
 
 from absl import logging
 
@@ -95,13 +96,7 @@ flags.mark_flag_as_required("map")
 class PySC2EnvReduced(py_environment.PyEnvironment):
     
     def __init__(self):
-        self._observation_spec = array_spec.BoundedArraySpec(
-            shape=(27, 84, 84), dtype=np.int32, minimum=0, name='observation')
-        self._action_spec = array_spec.BoundedArraySpec(
-            shape=(), dtype=np.int32, minimum=0, maximum=1, name='action')
-        self._episode_ended = False
-
-        #PySC2 environment initialization code below
+        # PySC2 environment initialization
         map_inst = maps.get(FLAGS.map)
         agent_classes = []
         players = []
@@ -131,7 +126,7 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
             game_steps_per_episode=FLAGS.game_steps_per_episode,
             disable_fog=FLAGS.disable_fog,
             visualize=False)
-        self.env = available_actions_printer.AvailableActionsPrinter(env)
+        self.env = env
         self.agents = [agent_cls() for agent_cls in agent_classes]
         observation_spec = env.observation_spec()
         action_spec = env.action_spec()
@@ -140,10 +135,20 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
         self.timesteps = env.reset()
         for a in self.agents:
             a.reset()
-
-        print(type(action_spec[0]))
-        print(action_spec[0].functions[0].args)
-        print(action_spec[0].types)
+        
+        # Wrapper initialization
+        self._episode_ended = False
+        
+        # Observation is feature_screen
+        self._observation_spec = array_spec.BoundedArraySpec(
+            shape=(27, 84, 84), dtype=np.int32, minimum=0, name='observation')
+        
+        # Action is move_camera (id = 1)
+        func_id = 1
+        arg = [arg.sizes for arg in action_spec[0].functions[func_id].args][0] # fn has only one arg
+        self._action_spec = array_spec.BoundedArraySpec(
+           shape=np.array(arg).shape, dtype=np.int32, minimum=min(arg), maximum=max(arg), name='action')
+        
 
     def action_spec(self):
         return self._action_spec
@@ -156,15 +161,12 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
         return ts.restart(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32))
 
     def _step(self, action):
-        actions = [agent.step(timestep) for agent, timestep in zip(self.agents, self.timesteps)]
         if self.timesteps[0].last():
             self._episode_ended = True
             return ts.termination(np.array([self.timesteps[0].observation.feature_screen], dtype=np.int32), 
                                   self.timesteps[0].observation.score_cumulative["score"])
-
-        self.timesteps = self.env.step(actions)
-        logging.info("Actions taken: {}".format(actions))
-        logging.info("Score is: {}".format(self.timesteps[0].observation.score_cumulative["score"]))
+        action_to_take = [actions.FunctionCall(1, [action])]
+        self.timesteps = self.env.step(action_to_take)
         return ts.transition(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32), 
                              reward=self.timesteps[0].reward, discount=self.timesteps[0].discount)
 
