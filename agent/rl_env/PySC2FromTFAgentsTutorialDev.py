@@ -41,7 +41,7 @@ from absl import logging
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_bool("render", True, "Whether to render with pygame.")
+flags.DEFINE_bool("render", False, "Whether to render with pygame.")
 point_flag.DEFINE_point("feature_screen_size", "84",
                         "Resolution for screen feature layers.")
 point_flag.DEFINE_point("feature_minimap_size", "64",
@@ -57,7 +57,7 @@ flags.DEFINE_bool("use_feature_units", False,
                   "Whether to include feature units.")
 flags.DEFINE_bool("use_raw_units", True,
                   "Whether to include raw units.")
-flags.DEFINE_bool("disable_fog", False, "Whether to disable Fog of War.")
+flags.DEFINE_bool("disable_fog", True, "Whether to disable Fog of War.")
 
 flags.DEFINE_integer("max_agent_steps", 0, "Total agent steps.")
 flags.DEFINE_integer("game_steps_per_episode", None, "Game steps per episode.")
@@ -91,7 +91,20 @@ flags.DEFINE_string("map", "MoveToBeacon", "Name of a map to use.")
 flags.DEFINE_bool("battle_net_map", False, "Use the battle.net map version.")
 flags.mark_flag_as_required("map")
 
+from pysc2.lib import features
 
+PLAYER_SELF = features.PlayerRelative.SELF
+_PLAYER_NEUTRAL = features.PlayerRelative.NEUTRAL  # beacon/minerals
+_PLAYER_ENEMY = features.PlayerRelative.ENEMY
+
+FUNCTIONS = actions.FUNCTIONS
+RAW_FUNCTIONS = actions.RAW_FUNCTIONS
+
+
+def _xy_locs(mask):
+    """Mask should be a set of bools from comparison with a feature layer."""
+    y, x = mask.nonzero()
+    return list(zip(x, y))
 
 class PySC2EnvReduced(py_environment.PyEnvironment):
     
@@ -111,7 +124,7 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
                                            sc2_env.Difficulty[FLAGS.difficulty],
                                            sc2_env.BotBuild[FLAGS.bot_build]))
         env = sc2_env.SC2Env(
-            map_name=FLAGS.map,
+            map_name='MoveToBeacon',
             battle_net_map=FLAGS.battle_net_map,
             players=players,
             agent_interface_format=sc2_env.parse_agent_interface_format(
@@ -159,16 +172,38 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
     def _reset(self):
         self._episode_ended = False
         return ts.restart(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32))
+    
 
+    
     def _step(self, action):
-        if self.timesteps[0].last():
+        
+        obs = self.timesteps[0]
+        
+        if obs.last():
             self._episode_ended = True
-            return ts.termination(np.array([self.timesteps[0].observation.feature_screen], dtype=np.int32), 
-                                  self.timesteps[0].observation.score_cumulative["score"])
-        action_to_take = [actions.FunctionCall(self.func_id, [action])]
+            return ts.termination(np.array(obs.observation.feature_screen, dtype=np.int32),
+                                  obs.observation.score_cumulative["score"])
+        
+        # Scripted move to beacon agent
+        # see https://github.com/deepmind/pysc2/blob/05b28ef0d85aa5eef811bc49ff4c0cbe496c0adb/pysc2/agents/scripted_agent.py#L40
+        if actions.FUNCTIONS.Move_screen.id in obs.observation.available_actions:
+            player_relative = obs.observation.feature_screen.player_relative
+            beacon = _xy_locs(player_relative == _PLAYER_NEUTRAL)
+            if not beacon:
+                action_to_take = [actions.FUNCTIONS.no_op()]
+            beacon_center = np.mean(beacon, axis=0).round()
+            # rand_move = np.random.randint(low=0, high=84, size=(2,))
+            action_to_take = [actions.FUNCTIONS.Move_screen("now", beacon_center)] 
+        else:
+            action_to_take = [actions.FUNCTIONS.select_army("select")]
+        
+        print(obs.reward, obs.observation.score_cumulative["score"])
+        print(action_to_take)
+        
         self.timesteps = self.env.step(action_to_take)
-        return ts.transition(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32), 
-                             reward=self.timesteps[0].reward, discount=self.timesteps[0].discount)
+        
+        return ts.transition(np.array(obs.observation.feature_screen, dtype=np.int32), 
+                             reward=obs.reward, discount=obs.discount)
 
 
 def main(unused_argv):
