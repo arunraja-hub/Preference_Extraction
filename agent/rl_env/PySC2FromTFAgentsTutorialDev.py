@@ -107,7 +107,7 @@ def _xy_locs(mask):
     return list(zip(x, y))
 
 class PySC2EnvReduced(py_environment.PyEnvironment):
-    
+
     def __init__(self):
         # PySC2 environment initialization
         map_inst = maps.get(FLAGS.map)
@@ -148,20 +148,25 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
         self.timesteps = env.reset()
         for a in self.agents:
             a.reset()
-        
+
         # Wrapper initialization
         self._episode_ended = False
-        
+
         # Observation is feature_screen
         self._observation_spec = array_spec.BoundedArraySpec(
             shape=(27, 84, 84), dtype=np.int32, minimum=0, name='observation')
-        
-        # Action is move_camera (id = 1)
-        self.func_id = 1
-        arg = [arg.sizes for arg in action_spec[0].functions[self.func_id].args][0] # fn has only one arg
+
+        # Action is move screen (id = 331)
+        self.func_id = 331
+        #arg = [arg.sizes for arg in action_spec[0].functions[self.func_id].args][0]
+        arg = [arg.sizes for arg in action_spec[0].functions[self.func_id].args][1]
+        print("arg:")
+        print(arg)
+        print("Argument shape:")
+        print(np.array(arg).shape)
         self._action_spec = array_spec.BoundedArraySpec(
            shape=np.array(arg).shape, dtype=np.int32, minimum=min(arg), maximum=max(arg), name='action')
-        
+
 
     def action_spec(self):
         return self._action_spec
@@ -172,37 +177,31 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
     def _reset(self):
         self._episode_ended = False
         return ts.restart(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32))
-    
 
-    
+
+
     def _step(self, action):
-        
+
         obs = self.timesteps[0]
-        
+
         if obs.last():
             self._episode_ended = True
             return ts.termination(np.array(obs.observation.feature_screen, dtype=np.int32),
                                   obs.observation.score_cumulative["score"])
-        
-        # Scripted move to beacon agent
-        # see https://github.com/deepmind/pysc2/blob/05b28ef0d85aa5eef811bc49ff4c0cbe496c0adb/pysc2/agents/scripted_agent.py#L40
-        if actions.FUNCTIONS.Move_screen.id in obs.observation.available_actions:
-            player_relative = obs.observation.feature_screen.player_relative
-            beacon = _xy_locs(player_relative == _PLAYER_NEUTRAL)
-            if not beacon:
-                action_to_take = [actions.FUNCTIONS.no_op()]
-            beacon_center = np.mean(beacon, axis=0).round()
-            # rand_move = np.random.randint(low=0, high=84, size=(2,))
-            action_to_take = [actions.FUNCTIONS.Move_screen("now", beacon_center)] 
+
+        print("Action:")
+        print(action)
+        if int(actions.FUNCTIONS.Move_screen.id) in obs.observation.available_actions:
+            action_to_take = [actions.FUNCTIONS.Move_screen("now", action)]
         else:
             action_to_take = [actions.FUNCTIONS.select_army("select")]
-        
+
         print(obs.reward, obs.observation.score_cumulative["score"])
-        print(action_to_take)
-        
+        #print(action_to_take)
+
         self.timesteps = self.env.step(action_to_take)
-        
-        return ts.transition(np.array(obs.observation.feature_screen, dtype=np.int32), 
+
+        return ts.transition(np.array(obs.observation.feature_screen, dtype=np.int32),
                              reward=obs.reward, discount=obs.discount)
 
 
@@ -210,6 +209,6 @@ def main(unused_argv):
     environment = PySC2EnvReduced()
     utils.validate_py_environment(environment, episodes=1)
 
-    
+
 if __name__ == "__main__":
     app.run(main)
