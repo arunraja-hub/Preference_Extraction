@@ -165,7 +165,7 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
         print("Argument shape:")
         print(np.array(arg).shape)
         self._action_spec = array_spec.BoundedArraySpec(
-           shape=np.array(arg).shape, dtype=np.int32, minimum=min(arg), maximum=max(arg), name='action')
+           shape=np.array(arg).shape, dtype=np.int32, minimum=0, maximum=max(arg), name='action')
 
 
     def action_spec(self):
