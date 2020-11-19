@@ -105,7 +105,7 @@ class PySC2Env(py_environment.PyEnvironment):
                                            sc2_env.Difficulty[FLAGS.difficulty],
                                            sc2_env.BotBuild[FLAGS.bot_build]))
         env = sc2_env.SC2Env(
-            map_name=map_inst,
+            map_name=FLAGS.map,
             battle_net_map=FLAGS.battle_net_map,
             players=players,
             agent_interface_format=sc2_env.parse_agent_interface_format(
