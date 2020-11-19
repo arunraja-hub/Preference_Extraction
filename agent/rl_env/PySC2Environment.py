@@ -5,6 +5,8 @@ from __future__ import print_function
 import abc
 import tensorflow as tf
 import numpy as np
+import gin
+import math
 
 from tf_agents.environments import py_environment
 from tf_agents.environments import tf_environment
@@ -86,10 +88,10 @@ flags.mark_flag_as_required("map")
 FUNCTIONS = actions.FUNCTIONS
 RAW_FUNCTIONS = actions.RAW_FUNCTIONS
 
-
+@gin.configurable
 class PySC2Env(py_environment.PyEnvironment):
 
-    def __init__(self):
+    def __init__(self, flatten_action_specs):
         # PySC2 environment initialization
         map_inst = maps.get(FLAGS.map)
         agent_classes = []
@@ -122,27 +124,25 @@ class PySC2Env(py_environment.PyEnvironment):
             visualize=False)
         self.env = env
         self.agents = [agent_cls() for agent_cls in agent_classes]
-        observation_spec = env.observation_spec()
-        action_spec = env.action_spec()
-        for agent, obs_spec, act_spec in zip(self.agents, observation_spec, action_spec):
-            agent.setup(obs_spec, act_spec)
-        self.timesteps = env.reset()
-        for a in self.agents:
-            a.reset()
 
         # Wrapper initialization
-        self._episode_ended = False
-
         # Observation is feature_screen
         self._observation_spec = array_spec.BoundedArraySpec(
-            shape=(27, 84, 84), dtype=np.int32, minimum=0, name='observation')
+            shape=(27, 84, 84), dtype=np.float32, minimum=0, name='observation')
 
         # Action is move screen (id = 331)
         self.func_id = 331
-        arg = [arg.sizes for arg in action_spec[0].functions[self.func_id].args][1]
-        self._action_spec = array_spec.BoundedArraySpec(
-           shape=np.array(arg).shape, dtype=np.int32, minimum=0, maximum=max(arg), name='action')
-
+        arg = [arg.sizes for arg in env.action_spec()[0].functions[self.func_id].args][1]
+        
+        if flatten_action_specs:
+            self.flatten_action_specs = True
+            self.act_space = max(arg)
+            self._action_spec = array_spec.BoundedArraySpec(
+                shape=(), dtype=np.int64, minimum=0, maximum=self.act_space ** 2, name='action')
+        else:
+            self.flatten_action_specs = False
+            self._action_spec = array_spec.BoundedArraySpec(
+                shape=np.array(arg).shape, dtype=np.int64, minimum=0, maximum=max(arg), name='action')
 
     def action_spec(self):
         return self._action_spec
@@ -153,34 +153,45 @@ class PySC2Env(py_environment.PyEnvironment):
 
     
     def _reset(self):
-        self._episode_ended = False
-        return ts.restart(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32))
+        self.timesteps = self.env.reset()
+        for a in self.agents:
+            a.reset()
+        return ts.restart(np.array(self.timesteps[0].observation.feature_screen, dtype=np.float32))
 
 
     def _step(self, action):
+                
+        if self.timesteps[0].last():
+            # The last action ended the episode. Ignore the current action and start a new episode.
+            return self.reset()
+        
+        if self.flatten_action_specs:# Un-flattens action
+            action = (math.floor(action / self.act_space), self.act_space - (action % self.act_space))
 
-        obs = self.timesteps[0]
-
-        if obs.last():
-            self._episode_ended = True
-            return ts.termination(np.array(obs.observation.feature_screen, dtype=np.int32),
-                                  obs.observation.score_cumulative["score"])
-
-        if int(actions.FUNCTIONS.Move_screen.id) in obs.observation.available_actions:
+        if int(actions.FUNCTIONS.Move_screen.id) in self.timesteps[0].observation.available_actions:
             action_to_take = [actions.FUNCTIONS.Move_screen("now", action)]
         else:
             action_to_take = [actions.FUNCTIONS.select_army("select")]
         
         self.timesteps = self.env.step(action_to_take)
-
-        return ts.transition(np.array(obs.observation.feature_screen, dtype=np.int32),
-                             reward=obs.reward, discount=obs.discount)
+        
+        if self.timesteps[0].last():
+            return ts.termination(np.array(self.timesteps[0].observation.feature_screen, dtype=np.float32),
+                                  reward=self.timesteps[0].observation.score_cumulative["score"])
+        
+        return ts.transition(np.array(self.timesteps[0].observation.feature_screen, dtype=np.float32),
+                            reward=self.timesteps[0].reward)
 
 
 def main(unused_argv):
     environment = PySC2Env()
     utils.validate_py_environment(environment, episodes=3)
 
+@gin.configurable
+def pysc2_tf_agents_env(_):
+    return PySC2Env()
+    
+    
 
 if __name__ == "__main__":
     app.run(main)
