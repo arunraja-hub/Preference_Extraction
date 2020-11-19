@@ -41,39 +41,30 @@ from absl import logging
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_bool("render", False, "Whether to render with pygame.")
-point_flag.DEFINE_point("feature_screen_size", "84",
-                        "Resolution for screen feature layers.")
-point_flag.DEFINE_point("feature_minimap_size", "64",
-                        "Resolution for minimap feature layers.")
-point_flag.DEFINE_point("rgb_screen_size", None,
-                        "Resolution for rendered screen.")
-point_flag.DEFINE_point("rgb_minimap_size", None,
-                        "Resolution for rendered minimap.")
-flags.DEFINE_enum("action_space", None, sc2_env.ActionSpace._member_names_,  # pylint: disable=protected-access
-                  "Which action space to use. Needed if you take both feature "
-                  "and rgb observations.")
-flags.DEFINE_bool("use_feature_units", False,
-                  "Whether to include feature units.")
-flags.DEFINE_bool("use_raw_units", True,
-                  "Whether to include raw units.")
-flags.DEFINE_bool("disable_fog", True, "Whether to disable Fog of War.")
+
+point_flag.DEFINE_point("feature_screen_size", "84", "Resolution for screen feature layers.")
+point_flag.DEFINE_point("feature_minimap_size", "64", "Resolution for minimap feature layers.")
+point_flag.DEFINE_point("rgb_screen_size", None, "Resolution for rendered screen.")
+point_flag.DEFINE_point("rgb_minimap_size", None, "Resolution for rendered minimap.")
 
 flags.DEFINE_integer("max_agent_steps", 0, "Total agent steps.")
 flags.DEFINE_integer("game_steps_per_episode", None, "Game steps per episode.")
 flags.DEFINE_integer("max_episodes", 0, "Total episodes.")
 flags.DEFINE_integer("step_mul", 8, "Game steps per agent step.")
+flags.DEFINE_integer("parallel", 1, "How many instances to run in parallel.")
 
+flags.DEFINE_string("map", "MoveToBeacon", "Name of a map to use.")
 flags.DEFINE_string("agent", "pysc2.agents.random_agent.RandomAgent",
                     "Which agent to run, as a python path to an Agent class.")
-flags.DEFINE_string("agent_name", None,
-                    "Name of the agent in replays. Defaults to the class name.")
+flags.DEFINE_string("agent_name", None, "Name of the agent in replays. Defaults to the class name.")
+flags.DEFINE_string("agent2", "Bot", "Second agent, either Bot or agent class.")
+flags.DEFINE_string("agent2_name", None, "Name of the agent in replays. Defaults to the class name.")
+
+
+flags.DEFINE_enum("action_space", None, sc2_env.ActionSpace._member_names_,  # pylint: disable=protected-access
+                  "Which action space to use. Needed if you take both feature and rgb observations.")
 flags.DEFINE_enum("agent_race", "random", sc2_env.Race._member_names_,  # pylint: disable=protected-access
                   "Agent 1's race.")
-
-flags.DEFINE_string("agent2", "Bot", "Second agent, either Bot or agent class.")
-flags.DEFINE_string("agent2_name", None,
-                    "Name of the agent in replays. Defaults to the class name.")
 flags.DEFINE_enum("agent2_race", "random", sc2_env.Race._member_names_,  # pylint: disable=protected-access
                   "Agent 2's race.")
 flags.DEFINE_enum("difficulty", "very_easy", sc2_env.Difficulty._member_names_,  # pylint: disable=protected-access
@@ -81,30 +72,20 @@ flags.DEFINE_enum("difficulty", "very_easy", sc2_env.Difficulty._member_names_, 
 flags.DEFINE_enum("bot_build", "random", sc2_env.BotBuild._member_names_,  # pylint: disable=protected-access
                   "Bot's build strategy.")
 
+flags.DEFINE_bool("disable_fog", True, "Whether to disable Fog of War.")
+flags.DEFINE_bool("use_feature_units", False, "Whether to include feature units.")
+flags.DEFINE_bool("use_raw_units", True, "Whether to include raw units.")
 flags.DEFINE_bool("profile", False, "Whether to turn on code profiling.")
 flags.DEFINE_bool("trace", False, "Whether to trace the code execution.")
-flags.DEFINE_integer("parallel", 1, "How many instances to run in parallel.")
-
 flags.DEFINE_bool("save_replay", True, "Whether to save a replay at the end.")
-
-flags.DEFINE_string("map", "MoveToBeacon", "Name of a map to use.")
 flags.DEFINE_bool("battle_net_map", False, "Use the battle.net map version.")
+flags.DEFINE_bool("render", False, "Whether to render with pygame.")
+
 flags.mark_flag_as_required("map")
-
-from pysc2.lib import features
-
-PLAYER_SELF = features.PlayerRelative.SELF
-_PLAYER_NEUTRAL = features.PlayerRelative.NEUTRAL  # beacon/minerals
-_PLAYER_ENEMY = features.PlayerRelative.ENEMY
 
 FUNCTIONS = actions.FUNCTIONS
 RAW_FUNCTIONS = actions.RAW_FUNCTIONS
 
-
-def _xy_locs(mask):
-    """Mask should be a set of bools from comparison with a feature layer."""
-    y, x = mask.nonzero()
-    return list(zip(x, y))
 
 class PySC2EnvReduced(py_environment.PyEnvironment):
 
@@ -124,7 +105,7 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
                                            sc2_env.Difficulty[FLAGS.difficulty],
                                            sc2_env.BotBuild[FLAGS.bot_build]))
         env = sc2_env.SC2Env(
-            map_name='MoveToBeacon',
+            map_name=FLAGS.map,
             battle_net_map=FLAGS.battle_net_map,
             players=players,
             agent_interface_format=sc2_env.parse_agent_interface_format(
@@ -158,12 +139,7 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
 
         # Action is move screen (id = 331)
         self.func_id = 331
-        #arg = [arg.sizes for arg in action_spec[0].functions[self.func_id].args][0]
         arg = [arg.sizes for arg in action_spec[0].functions[self.func_id].args][1]
-        print("arg:")
-        print(arg)
-        print("Argument shape:")
-        print(np.array(arg).shape)
         self._action_spec = array_spec.BoundedArraySpec(
            shape=np.array(arg).shape, dtype=np.int32, minimum=0, maximum=max(arg), name='action')
 
@@ -171,13 +147,14 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
     def action_spec(self):
         return self._action_spec
 
+    
     def observation_spec(self):
         return self._observation_spec
 
+    
     def _reset(self):
         self._episode_ended = False
         return ts.restart(np.array(self.timesteps[0].observation.feature_screen, dtype=np.int32))
-
 
 
     def _step(self, action):
@@ -189,16 +166,11 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
             return ts.termination(np.array(obs.observation.feature_screen, dtype=np.int32),
                                   obs.observation.score_cumulative["score"])
 
-        print("Action:")
-        print(action)
         if int(actions.FUNCTIONS.Move_screen.id) in obs.observation.available_actions:
             action_to_take = [actions.FUNCTIONS.Move_screen("now", action)]
         else:
             action_to_take = [actions.FUNCTIONS.select_army("select")]
-
-        print(obs.reward, obs.observation.score_cumulative["score"])
-        #print(action_to_take)
-
+        
         self.timesteps = self.env.step(action_to_take)
 
         return ts.transition(np.array(obs.observation.feature_screen, dtype=np.int32),
