@@ -178,8 +178,8 @@ class PySC2Env(py_environment.PyEnvironment):
 
 
 def main(unused_argv):
-    environment = PySC2EnvReduced()
-    utils.validate_py_environment(environment, episodes=1)
+    environment = PySC2Env()
+    utils.validate_py_environment(environment, episodes=3)
 
 
 if __name__ == "__main__":
