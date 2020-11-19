@@ -87,7 +87,7 @@ FUNCTIONS = actions.FUNCTIONS
 RAW_FUNCTIONS = actions.RAW_FUNCTIONS
 
 
-class PySC2EnvReduced(py_environment.PyEnvironment):
+class PySC2Env(py_environment.PyEnvironment):
 
     def __init__(self):
         # PySC2 environment initialization
@@ -105,7 +105,7 @@ class PySC2EnvReduced(py_environment.PyEnvironment):
                                            sc2_env.Difficulty[FLAGS.difficulty],
                                            sc2_env.BotBuild[FLAGS.bot_build]))
         env = sc2_env.SC2Env(
-            map_name=FLAGS.map,
+            map_name=map_inst,
             battle_net_map=FLAGS.battle_net_map,
             players=players,
             agent_interface_format=sc2_env.parse_agent_interface_format(
