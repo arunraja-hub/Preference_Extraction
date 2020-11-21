@@ -1,0 +1,86 @@
+trainingInput:
+  scaleTier: CUSTOM
+  masterType: n1-standard-4
+  hyperparameters:
+    goal: MAXIMIZE
+    hyperparameterMetricTag: mean_val_auc
+    maxTrials: 60
+    maxParallelTrials: 5
+    params:
+      - parameterName: gin_bindings=agent_extractor.first_size
+        type: INTEGER
+        minValue: 8
+        maxValue: 128
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=agent_extractor.last_size
+        type: INTEGER
+        minValue: 4
+        maxValue: 32
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=agent_extractor.num_layers
+        type: INTEGER
+        minValue: 0
+        maxValue: 4
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=AGENT_DIR
+        type: CATEGORICAL
+        categoricalValues:
+        - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000'"
+        - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000'"
+        - "'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000'"
+        
+      - parameterName: gin_bindings=agent_extractor.agent_last_layer
+        type: INTEGER
+        minValue: 3
+        maxValue: 5
+        scaleType: UNIT_LINEAR_SCALE
+        
+      - parameterName: gin_bindings=TfExtractor.slowly_unfreezing
+        type: CATEGORICAL
+        categoricalValues:
+        - "True"
+        - "False"
+
+      - parameterName: gin_bindings=agent_extractor.agent_freezed_layers
+        type: CATEGORICAL
+        categoricalValues:
+        - "()"
+        - "(0,)"
+        - "(0, 1)"
+        - "(0, 1, 2)"
+        - "(0, 1, 2, 3)"
+        
+      - parameterName: gin_bindings=SlowlyUnfreezing.start_unfreezing_from
+        type: CATEGORICAL
+        categoricalValues:
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        
+      - parameterName: gin_bindings=SlowlyUnfreezing.unfreze_every_n_epochs
+        type: INTEGER
+        minValue: 5
+        maxValue: 100
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=agent_extractor.randomize_weights
+        type: CATEGORICAL
+        categoricalValues:
+        - "True"
+        - "False"
+        
+      - parameterName: gin_bindings=agent_extractor.reg_amount
+        type: DOUBLE
+        minValue: 0.001
+        maxValue: 0.2
+        scaleType: UNIT_LOG_SCALE
+        
+      - parameterName: gin_bindings=agent_extractor.drop_rate
+        type: DOUBLE
+        minValue: 0.01
+        maxValue: 0.2
+        scaleType: UNIT_LOG_SCALE

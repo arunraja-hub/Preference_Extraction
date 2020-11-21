@@ -1,0 +1,46 @@
+AGENT_DIR = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000"
+DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_10000.pkl"
+INPUT_SHAPE = None
+
+data_pipeline.data_path = %DATA_PATH
+data_pipeline.env = "Doom"
+data_pipeline.rebalance = True
+
+extractor_type.extractor = @TfExtractor
+
+extractor.train.do_summary = True
+Extractor.num_repeat = 10
+
+TfExtractor.extractor_fn = @agent_extractor
+TfExtractor.num_train = 50
+TfExtractor.num_val = 500
+TfExtractor.epochs = 200
+TfExtractor.batch_size = 512
+TfExtractor.slowly_unfreezing = True
+
+SlowlyUnfreezing.unfreze_every_n_epochs = 10
+SlowlyUnfreezing.start_unfreezing_from = 3
+
+cnn_from_obs.input_shape = %INPUT_SHAPE
+cnn_from_obs.pick_random_col_ch = False
+cnn_from_obs.cnn_first_size = 16
+cnn_from_obs.cnn_last_size = 64
+cnn_from_obs.cnn_num_layers = 3
+cnn_from_obs.cnn_stride_every_n = 1
+cnn_from_obs.fc_first_size = 32
+cnn_from_obs.fc_last_size = 16
+cnn_from_obs.fc_num_layers = 2
+cnn_from_obs.pooling = False
+cnn_from_obs.reg_amount = 0
+cnn_from_obs.drop_rate = 0
+cnn_from_obs.learning_rate = .01
+
+agent_extractor.agent_path = %AGENT_DIR
+agent_extractor.agent_last_layer = 4
+agent_extractor.agent_freezed_layers = ()
+agent_extractor.first_size= 32
+agent_extractor.last_size = 32
+agent_extractor.num_layers = 1
+agent_extractor.reg_amount = 0
+agent_extractor.drop_rate = 0
+agent_extractor.randomize_weights = True

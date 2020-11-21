@@ -2,6 +2,7 @@ import os
 import random
 
 import cv2
+import csv
 import gin
 import imageio
 import imageio.core.util
@@ -12,7 +13,7 @@ from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 from vizdoom import DoomGame
 from vizdoom import GameVariable
-
+import tensorflow as tf
 
 class DoomVar:
     def __init__(self, name, doom_var, reward, add_channel, max_val):
@@ -40,7 +41,7 @@ imageio.core.util._precision_warn = silence_imageio_warning
 class DoomEnvironment(py_environment.PyEnvironment):
 
     def __init__(self, config_name, frame_skip, episode_timeout, obs_shape, start_ammo, living_reward, kill_imp_reward,
-                 kill_demon_reward, ammo_reward, health_reward):
+                 kill_demon_reward, ammo_reward, health_reward, reward_divisor):
         super().__init__()
 
         self.obs_shape = obs_shape
@@ -49,6 +50,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         self._frame_skip = frame_skip
         self.start_ammo = start_ammo
         self._living_reward = living_reward
+        self._reward_divisor = reward_divisor
 
         self._action_spec = array_spec.BoundedArraySpec(
             shape=(), dtype=np.int64, minimum=0, maximum=self._num_actions - 1, name='action')
@@ -73,6 +75,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
         game = DoomGame()
         game.load_config(config_name)
         game.set_window_visible(False)
+        game.set_labels_buffer_enabled(True)
         game.set_episode_timeout(episode_timeout)
         game.init()
         return game
@@ -117,6 +120,7 @@ class DoomEnvironment(py_environment.PyEnvironment):
             reward += (current_val - self._doom_vars[i].pre_val) * self._doom_vars[i].reward
             self._doom_vars[i].pre_val = current_val
 
+        reward /= self._reward_divisor
         return reward
 
     def take_action(self, action):
@@ -207,6 +211,31 @@ class SaveVideoWrapper(wrappers.PyEnvironmentBaseWrapper):
         self.video.append_data(self._env.render())
         return time_step
 
+@gin.configurable
+class AnalyseAmmoWrapper(wrappers.PyEnvironmentBaseWrapper):
+    def __init__(self, env, filename, root_dir, save_prob=.01):
+        super(AnalyseAmmoWrapper, self).__init__(env)
+        filename = os.path.join(root_dir, filename)
+        try:
+            os.remove(filename)
+        except:
+            pass
+        self.csvfile = tf.io.gfile.GFile(filename, 'w')
+        self.csvwriter = csv.writer(self.csvfile, delimiter=',',quotechar='"')
+        self.csvwriter.writerow(['timeStep','ammoLeft'])
+        self.save_prob = save_prob
+        self.should_save = False
+
+    def _step(self, action):
+        time_step = self._env.step(action)
+        if time_step.step_type == ts.StepType.FIRST:
+            self.should_save = random.random() < self.save_prob
+            self.csvfile.flush()
+        if self.should_save:
+            step_ammo = self._game.get_game_variable(GameVariable.AMMO6)
+            step_time = self._env._game.get_episode_time()
+            self.csvwriter.writerow([step_time, step_ammo])
+        return time_step
 
 @gin.configurable
 def tf_agents_env(_):
@@ -216,3 +245,11 @@ def tf_agents_env(_):
 @gin.configurable
 def tf_agents_env_with_video(_):
     return SaveVideoWrapper(tf_agents_env(None), 'states_video.mp4')
+
+@gin.configurable
+def tf_agents_env_with_ammo(_):
+    return AnalyseAmmoWrapper(tf_agents_env(None), 'eval_ammos.csv')
+
+@gin.configurable
+def tf_agents_env_with_state(_):
+    return SaveStateWrapper(tf_agents_env(None), 'states_dir', 0.95)

@@ -17,6 +17,7 @@ import gin
 import gin.tf
 from six.moves import range
 import tensorflow as tf
+import hypertune
 
 from tf_agents.agents.ppo import ppo_agent
 from tf_agents.agents.ppo import ppo_clip_agent
@@ -35,7 +36,7 @@ from tf_agents.policies import random_tf_policy
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.utils import common
 import environment_specs
-from rl_env import DoomEnviroment
+#from rl_env import DoomEnviroment
 
 ON_POLICY_AGENTS = (
     ppo_agent.PPOAgent,
@@ -69,6 +70,21 @@ def cleanup_checkpoints(checkpoint_dir):
   for checkpoint_path in checkpoint_state.all_model_checkpoint_paths:
     tf.compat.v1.train.remove_checkpoint(checkpoint_path)
 
+class IntervalCounter:
+    def __init__(self, interval):
+        self.interval = interval
+        self.last_trigger = 0
+
+    def should_trigger(self, step):
+        if step - self.last_trigger >= self.interval:
+            self.last_trigger += self.interval
+            return True
+        return False
+
+class IntervalCounterTf(IntervalCounter):
+    @tf.function
+    def should_trigger(self, step):
+        return super().should_trigger(step)
 
 @gin.configurable
 def train(
@@ -101,6 +117,13 @@ def train(
     summaries_flush_secs=10,
     early_termination_fn=None,
     env_metric_factories=None):
+
+  eval_interval_counter=IntervalCounter(eval_interval)
+  train_checkpoint_interval_counter = IntervalCounter(train_checkpoint_interval)
+  policy_checkpoint_interval_counter = IntervalCounter(policy_checkpoint_interval)
+  rb_checkpoint_interval_counter = IntervalCounter(rb_checkpoint_interval)
+  log_interval_counter = IntervalCounter(log_interval)
+  summary_interval_counter = IntervalCounterTf(summary_interval)
 
   if not agent_class:
     raise ValueError(
@@ -151,8 +174,10 @@ def train(
     ]
 
   global_step = tf.compat.v1.train.get_or_create_global_step()
+  # should_summary = tf.constant(summary_interval_counter.should_trigger(global_step.numpy()))
+  # print("should_summary", should_summary)
   with tf.compat.v2.summary.record_if(
-      lambda: tf.math.equal(global_step % summary_interval, 0)):
+          lambda: summary_interval_counter.should_trigger(global_step)):
     env = make_possibly_parallel_environment(env_name)
     tf_env, py_env = make_tf_py_envs(env)
 
@@ -178,9 +203,9 @@ def train(
           tf_metrics.NumberOfEpisodes(),
           tf_metrics.EnvironmentSteps(),
           tf_metrics.AverageReturnMetric(
-              batch_size=tf_env.batch_size),
+              batch_size=tf_env.batch_size, buffer_size=log_interval*tf_env.batch_size),
           tf_metrics.AverageEpisodeLengthMetric(
-              batch_size=tf_env.batch_size),
+              batch_size=tf_env.batch_size, buffer_size=log_interval*tf_env.batch_size),
       ]
     else:
       train_metrics = list(train_metrics)
@@ -196,7 +221,6 @@ def train(
         agent.collect_data_spec)
     logging.info('RB capacity: %i', replay_buffer.capacity)
     agent_observers = [replay_buffer.add_batch]
-
     initial_collect_policy = agent.collect_policy
     if initial_collect_random:
       initial_collect_policy = random_tf_policy.RandomTFPolicy(
@@ -265,6 +289,8 @@ def train(
           num_steps=train_sequence_length + 1,
           num_parallel_calls=3,
           single_deterministic_pass=True).repeat(train_steps_per_iteration)
+      if len([1 for _ in dataset]) == 0:
+             logging.warning('PPO Agent replay buffer as dataset is empty')
       return iter(dataset)
 
     # For off policy agents, one iterator is created for the entire training
@@ -321,10 +347,8 @@ def train(
       start_time = time.time()
       time_step, policy_state = collect_driver.run(
           time_step=time_step, policy_state=policy_state)
-
       if isinstance(agent, PPO_AGENTS):
         iterator = get_data_iter_repeated(replay_buffer)
-
       for _ in range(train_steps_per_iteration):
         if isinstance(agent, REINFORCE_AGENTS):
           total_loss = train_with_gather_all()
@@ -346,7 +370,8 @@ def train(
         replay_buffer.clear()
       time_acc += time.time() - start_time
 
-      if global_step.numpy() % log_interval == 0:
+      should_log = log_interval_counter.should_trigger(global_step.numpy())
+      if should_log:
         logging.info('step = %d, loss = %f', global_step.numpy(), total_loss)
         steps_per_sec = (global_step.numpy() - timed_at_step) / time_acc
         logging.info('%.3f steps/sec', steps_per_sec)
@@ -359,16 +384,27 @@ def train(
         train_metric.tf_summaries(
             train_step=global_step, step_metrics=train_metrics[:2])
 
-      if global_step.numpy() % train_checkpoint_interval == 0:
+        if should_log:
+            hpt = hypertune.HyperTune()
+            hpt.report_hyperparameter_tuning_metric(
+                hyperparameter_metric_tag=train_metric.name,
+                metric_value=train_metric.result(),
+                global_step=global_step)
+            print("Reported", train_metric.name, global_step.numpy())
+
+      if train_checkpoint_interval_counter.should_trigger(global_step.numpy()):
         train_checkpointer.save(global_step=global_step.numpy())
+        print("train_checkpoint", global_step.numpy())
 
-      if global_step.numpy() % policy_checkpoint_interval == 0:
+      if policy_checkpoint_interval_counter.should_trigger(global_step.numpy()):
         save_policy(global_step.numpy())
+        print("policy_checkpoint", global_step.numpy())
 
-      if global_step.numpy() % rb_checkpoint_interval == 0:
+      if rb_checkpoint_interval_counter.should_trigger(global_step.numpy()):
         rb_checkpointer.save(global_step=global_step.numpy())
+        print("rb_checkpoint", global_step.numpy())
 
-      if run_eval and global_step.numpy() % eval_interval == 0:
+      if run_eval and eval_interval_counter.should_trigger(global_step.numpy()):
         results = metric_utils.eager_compute(
             eval_metrics,
             eval_tf_env,

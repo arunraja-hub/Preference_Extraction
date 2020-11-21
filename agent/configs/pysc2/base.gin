@@ -1,5 +1,4 @@
 #-*-Python-*-
-import rl_env.AnalyseAmmoWrapper
 import tf_agents.environments.parallel_py_environment
 # trainer and evaluator modules are imported by train.py and eval.py
 
@@ -10,7 +9,7 @@ ENV_NAME = ''
 NUM_EVAL_EPISODES = 30
 NUM_EVAL_ENVIRONMENTS = 1
 NUM_TRAIN_ENVIRONMENTS = 1
-NUM_GLOBAL_STEPS = 1000000
+NUM_GLOBAL_STEPS = 100000
 trainer.train.agent_class = %AGENT_CLASS
 trainer.train.env_name = %ENV_NAME
 trainer.train.num_parallel_environments = %NUM_TRAIN_ENVIRONMENTS
@@ -29,17 +28,3 @@ evaluator.Evaluator.watch_until.checkpoint_timeout_secs = 3600
 exporter.Exporter.agent_class = %AGENT_CLASS
 exporter.Exporter.env_name = %ENV_NAME
 exporter.Exporter.env_load_fn = %ENV_LOAD_FN
-
-DoomEnvironment.config_name = 'rl_env/custom.cfg'
-DoomEnvironment.frame_skip = 4
-DoomEnvironment.obs_shape = (60, 100)
-DoomEnvironment.episode_timeout = 2000
-DoomEnvironment.start_ammo = 6
-DoomEnvironment.living_reward = 3
-DoomEnvironment.kill_imp_reward = 100
-DoomEnvironment.kill_demon_reward = 10
-DoomEnvironment.ammo_reward = 5
-DoomEnvironment.health_reward = .5
-DoomEnvironment.reward_divisor = 2000
-
-AnalyseAmmoWrapper.root_dir = %ROOT_DIR

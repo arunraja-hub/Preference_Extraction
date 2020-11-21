@@ -6,20 +6,20 @@ import tf_agents.environments.suite_gym
 import tf_agents.networks.q_network
 import trainer
 import tf_agents.replay_buffers.tf_uniform_replay_buffer
-import rl_env.DoomEnvironment
+import rl_env.PySC2Environment
 
 import gin
 
-include 'configs/base.gin'
+include 'configs/pysc2/base.gin'
 
 AGENT_CLASS = @dqn_agent.DqnAgent
-ENV_LOAD_FN = @tf_agents_env_with_ammo
+ENV_LOAD_FN = @pysc2_tf_agents_env
 ENV_NAME = '' # Change the environment used here.
-NUM_GLOBAL_STEPS = 360000
+NUM_GLOBAL_STEPS = 5000
 
 NUM_TRAIN_ENVIRONMENTS = 1
 CONV_LAYER_PARAMS = [[16, 3, 2]]  # Best found in ppo hparam search
-FC_LAYER_PARAMS = [64]  # Best found in ppo hparam search
+FC_LAYER_PARAMS = [128]  # Best found in ppo hparam search
 
 trainer.train.initial_collect_driver_class = \
     @initial_collect/dynamic_step_driver.DynamicStepDriver
@@ -31,20 +31,20 @@ collect/dynamic_step_driver.DynamicStepDriver.num_steps = 1
 
 tf_uniform_replay_buffer.TFUniformReplayBuffer.batch_size = %NUM_TRAIN_ENVIRONMENTS
 tf_uniform_replay_buffer.TFUniformReplayBuffer.max_length = 40000  # The biggest replay buffer that can run on gcloud
-tf_uniform_replay_buffer.TFUniformReplayBuffer.as_dataset.sample_batch_size = 64
+tf_uniform_replay_buffer.TFUniformReplayBuffer.as_dataset.sample_batch_size = 32
 
 dqn_agent.DqnAgent.td_errors_loss_fn = @tf.losses.mean_squared_error
 dqn_agent.DqnAgent.gamma = 0.99
 dqn_agent.DqnAgent.reward_scale_factor = 1.0
 dqn_agent.DqnAgent.gradient_clipping = None
 dqn_agent.DqnAgent.epsilon_greedy = 0.1
-dqn_agent.DqnAgent.target_update_tau = 0.05
+dqn_agent.DqnAgent.target_update_tau = 0.01
 dqn_agent.DqnAgent.target_update_period = 5
 dqn_agent.DqnAgent.debug_summaries = False
 dqn_agent.DqnAgent.summarize_grads_and_vars = False
 
 dqn_agent.DqnAgent.optimizer = @critic/tf.train.AdamOptimizer()
-critic/tf.train.AdamOptimizer.learning_rate = 1e-2
+critic/tf.train.AdamOptimizer.learning_rate = 1e-3
 
 dqn_agent.DqnAgent.q_network = @q_network.QNetwork()
 q_network.QNetwork.input_tensor_spec = @environment_specs.observation_spec()
@@ -52,9 +52,11 @@ q_network.QNetwork.action_spec = @environment_specs.action_spec()
 q_network.QNetwork.conv_layer_params = %CONV_LAYER_PARAMS
 q_network.QNetwork.fc_layer_params = %FC_LAYER_PARAMS
 
-trainer.train.train_checkpoint_interval = 20000
-trainer.train.policy_checkpoint_interval = 20000
-trainer.train.rb_checkpoint_interval = 60000
-trainer.train.log_interval = 10000
-trainer.train.summary_interval = 10000
+trainer.train.train_checkpoint_interval = 2000
+trainer.train.policy_checkpoint_interval = 2000
+trainer.train.rb_checkpoint_interval = 6000
+trainer.train.log_interval = 1000
+trainer.train.summary_interval = 1000
 trainer.train.summaries_flush_secs = 10
+
+PySC2Env.flatten_action_specs = True
