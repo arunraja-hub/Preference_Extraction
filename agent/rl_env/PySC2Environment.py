@@ -106,7 +106,7 @@ class PySC2Env(py_environment.PyEnvironment):
                 players.append(sc2_env.Bot(sc2_env.Race[FLAGS.agent2_race],
                                            sc2_env.Difficulty[FLAGS.difficulty],
                                            sc2_env.BotBuild[FLAGS.bot_build]))
-        env = sc2_env.SC2Env(
+        self.env = sc2_env.SC2Env(
             map_name=FLAGS.map,
             battle_net_map=FLAGS.battle_net_map,
             players=players,
@@ -122,7 +122,6 @@ class PySC2Env(py_environment.PyEnvironment):
             game_steps_per_episode=FLAGS.game_steps_per_episode,
             disable_fog=FLAGS.disable_fog,
             visualize=False)
-        self.env = env
         self.agents = [agent_cls() for agent_cls in agent_classes]
 
         # Wrapper initialization
@@ -132,26 +131,25 @@ class PySC2Env(py_environment.PyEnvironment):
 
         # Action is move screen (id = 331)
         self.func_id = 331
-        arg = [arg.sizes for arg in env.action_spec()[0].functions[self.func_id].args][1]
-        
+        arg_sizes = [arg.sizes for arg in env.action_spec()[0].functions[self.func_id].args][1]
+
+        self.flatten_action_specs = flatten_action_specs
         if flatten_action_specs:
-            self.flatten_action_specs = True
-            self.act_space = max(arg)
+            self.act_space = max(arg_sizes)
             self._action_spec = array_spec.BoundedArraySpec(
                 shape=(), dtype=np.int64, minimum=0, maximum=self.act_space ** 2, name='action')
         else:
-            self.flatten_action_specs = False
             self._action_spec = array_spec.BoundedArraySpec(
-                shape=np.array(arg).shape, dtype=np.int64, minimum=0, maximum=max(arg), name='action')
+                shape=np.array(arg_sizes).shape, dtype=np.int64, minimum=0, maximum=max(arg_sizes), name='action')
 
     def action_spec(self):
         return self._action_spec
 
-    
+
     def observation_spec(self):
         return self._observation_spec
 
-    
+
     def _reset(self):
         self.timesteps = self.env.reset()
         for a in self.agents:
@@ -160,11 +158,11 @@ class PySC2Env(py_environment.PyEnvironment):
 
 
     def _step(self, action):
-                
+
         if self.timesteps[0].last():
             # The last action ended the episode. Ignore the current action and start a new episode.
             return self.reset()
-        
+
         if self.flatten_action_specs:# Un-flattens action
             action = (math.floor(action / self.act_space), self.act_space - (action % self.act_space))
 
@@ -172,13 +170,13 @@ class PySC2Env(py_environment.PyEnvironment):
             action_to_take = [actions.FUNCTIONS.Move_screen("now", action)]
         else:
             action_to_take = [actions.FUNCTIONS.select_army("select")]
-        
+
         self.timesteps = self.env.step(action_to_take)
-        
+
         if self.timesteps[0].last():
             return ts.termination(np.array(self.timesteps[0].observation.feature_screen, dtype=np.float32),
-                                  reward=self.timesteps[0].observation.score_cumulative["score"])
-        
+                                  reward=self.timesteps[0].observation.reward)
+
         return ts.transition(np.array(self.timesteps[0].observation.feature_screen, dtype=np.float32),
                             reward=self.timesteps[0].reward)
 
@@ -190,8 +188,8 @@ def main(unused_argv):
 @gin.configurable
 def pysc2_tf_agents_env(_):
     return PySC2Env()
-    
-    
+
+
 
 if __name__ == "__main__":
     app.run(main)
