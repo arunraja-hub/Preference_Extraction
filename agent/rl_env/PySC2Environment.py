@@ -60,7 +60,6 @@ class PySC2Environment(py_environment.PyEnvironment):
         players = []
         agent_module, agent_name = agent.rsplit(".", 1)
         agent_cls = getattr(importlib.import_module(agent_module), agent_name)
-        agent_classes.append(agent_cls)
         players.append(sc2_env.Agent(sc2_env.Race[agent_race], agent_name))
         if map_inst.players >= 2:
               if agent2 == "Bot":
@@ -83,7 +82,7 @@ class PySC2Environment(py_environment.PyEnvironment):
             game_steps_per_episode=game_steps_per_episode,
             disable_fog=disable_fog,
             visualize=False)
-        self.agents = [agent_cls() for agent_cls in agent_classes]
+        self.agents = [agent_cls()]
 
         # Wrapper initialization
         # Observation is feature_screen
