@@ -59,4 +59,4 @@ trainer.train.log_interval = 1000
 trainer.train.summary_interval = 1000
 trainer.train.summaries_flush_secs = 10
 
-PySC2Env.flatten_action_specs = True
+PySC2Environment.flatten_action_specs = True
