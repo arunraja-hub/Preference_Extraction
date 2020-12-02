@@ -19,16 +19,19 @@ This process will download a few gigs the first time. It will be faster the next
 Follow instructions at the [Before you begin section](https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin).
     
     chmod +x launch_cloud.sh
-    ./launch_cloud.sh job_name
+    ./launch_cloud.sh job_name env_type agent_type hyperp_tune_bool
 
 If the dependencies change, you'll need to re push the base docker container. This will take a lot of time and you'll need to upload a few gigs.
 To re push the base docker image:
 
 Modify the DockerfileBase file.
-
+    
+    ENV_TYPE=doom
     BASE_IMAGE_URI=gcr.io/preference-extraction/pref_extract_base
-    docker build -f DockerfileBase -t $BASE_IMAGE_URI ./
+    docker build -f configs/$ENV_TYPE/DockerfileBase -t $BASE_IMAGE_URI ./
     docker push $BASE_IMAGE_URI
+
+Note, `pref_extract_base` works for the Doom enviroment, for the PySC2 enviroment change the dependencies in `pref_extract_pysc2`
 
 # To export an agent (locally)
 
