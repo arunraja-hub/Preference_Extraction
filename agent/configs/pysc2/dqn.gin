@@ -10,7 +10,7 @@ import rl_env.PySC2Environment
 
 import gin
 
-include 'configs/pysc2/base.gin'
+include 'configs/base.gin'
 
 AGENT_CLASS = @dqn_agent.DqnAgent
 ENV_LOAD_FN = @pysc2_tf_agents_env
@@ -18,7 +18,7 @@ ENV_NAME = '' # Change the environment used here.
 NUM_GLOBAL_STEPS = 5000
 
 NUM_TRAIN_ENVIRONMENTS = 1
-CONV_LAYER_PARAMS = [[16, 3, 2]]  # Best found in ppo hparam search
+CONV_LAYER_PARAMS = [[16, 3, 2]]
 FC_LAYER_PARAMS = [128]  # Best found in ppo hparam search
 
 trainer.train.initial_collect_driver_class = \

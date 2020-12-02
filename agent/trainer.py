@@ -36,7 +36,6 @@ from tf_agents.policies import random_tf_policy
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.utils import common
 import environment_specs
-#from rl_env import DoomEnviroment
 
 ON_POLICY_AGENTS = (
     ppo_agent.PPOAgent,
