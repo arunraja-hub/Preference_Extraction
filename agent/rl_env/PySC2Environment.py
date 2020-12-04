@@ -94,13 +94,13 @@ class PySC2Environment(py_environment.PyEnvironment):
         arg_sizes = [arg.sizes for arg in self.env.action_spec()[0].functions[self.func_id].args][1]
 
         self.flatten_action_specs = flatten_action_specs
+        self.act_space = max(arg_sizes)
         if flatten_action_specs:
-            self.act_space = max(arg_sizes)
             self._action_spec = array_spec.BoundedArraySpec(
                 shape=(), dtype=np.int64, minimum=0, maximum=self.act_space ** 2, name='action')
         else:
             self._action_spec = array_spec.BoundedArraySpec(
-                shape=np.array(arg_sizes).shape, dtype=np.int64, minimum=0, maximum=max(arg_sizes), name='action')
+                shape=np.array(arg_sizes).shape, dtype=np.int64, minimum=0, maximum=self.act_space, name='action')
 
     def action_spec(self):
         return self._action_spec
@@ -111,34 +111,34 @@ class PySC2Environment(py_environment.PyEnvironment):
 
 
     def _reset(self):
-        self.timesteps = self.env.reset()
+        self.timestep = self.env.reset()[0]
         for a in self.agents:
             a.reset()
-        return ts.restart(np.array(self.timesteps[0].observation.feature_screen, dtype=np.float32))
+        return ts.restart(np.array(self.timestep.observation.feature_screen, dtype=np.float32))
 
 
     def _step(self, action):
 
-        if self.timesteps[0].last():
+        if self.timestep.last():
             # The last action ended the episode. Ignore the current action and start a new episode.
             return self.reset()
 
         if self.flatten_action_specs:# Un-flattens action
             action = (math.floor(action / self.act_space), self.act_space - (action % self.act_space))
 
-        if int(actions.FUNCTIONS.Move_screen.id) in self.timesteps[0].observation.available_actions:
+        if int(actions.FUNCTIONS.Move_screen.id) in self.timestep.observation.available_actions:
             action_to_take = [actions.FUNCTIONS.Move_screen("now", action)]
         else:
             action_to_take = [actions.FUNCTIONS.select_army("select")]
 
-        self.timesteps = self.env.step(action_to_take)
+        self.timestep = self.env.step(action_to_take)[0]
 
-        if self.timesteps[0].last():
-            return ts.termination(np.array(self.timesteps[0].observation.feature_screen, dtype=np.float32),
-                                  reward=self.timesteps[0].reward)
+        if self.timestep.last():
+            return ts.termination(np.array(self.timestep.observation.feature_screen, dtype=np.float32),
+                                  reward=self.timestep.reward)
 
-        return ts.transition(np.array(self.timesteps[0].observation.feature_screen, dtype=np.float32),
-                            reward=self.timesteps[0].reward)
+        return ts.transition(np.array(self.timestep.observation.feature_screen, dtype=np.float32),
+                            reward=self.timestep.reward)
 
 
 def main(unused_argv):
