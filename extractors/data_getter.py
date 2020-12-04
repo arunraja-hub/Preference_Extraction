@@ -3,7 +3,7 @@ import pickle
 import concurrent.futures
 from tensorflow.python.lib.io import file_io
 from tf_agents.trajectories.trajectory import Trajectory
-
+from google.cloud import storage
 
 class ListWrapper(object):
     def __init__(self, list_to_wrap):
@@ -33,21 +33,24 @@ def get_data_from_file(data_path):
         return data
     except:
         return None
-    
+
+def list_folder(bucket_name, folder):
+    gcs = storage.Client()
+    bucket_to_list = gcs.lookup_bucket(bucket_name)
+    bucket_iterator = bucket_to_list.list_blobs(prefix=folder)
+    return [resource.name for resource in bucket_iterator]
+
 def get_data_from_folder(base_path):
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=100)
-    
-    futures = []
-    for i in range(5000):
-        full_path = os.path.join(base_path, "ts"+str(i)+".pickle")
-        future = executor.submit(get_data_from_file, full_path)
-        futures.append(future)
-    
+        
+    base_path = base_path.split('gs://')[-1]
+    bucket_name = base_path.split('/')[0]
+    folder = '/'.join(base_path.split('/')[1:])
     raw_data = []
-    for future in concurrent.futures.as_completed(futures):
-        result = future.result()
-        if result:
-            raw_data.append(result)
+    for file in list_folder(bucket_name, folder):
+        full_path = os.path.join('gs://', bucket_name, file)
+        data = get_data_from_file(full_path)
+        if data is not None:
+            raw_data.append(data)
     
     return raw_data
 

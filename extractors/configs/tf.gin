@@ -1,9 +1,10 @@
-AGENT_DIR = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000"
-DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_10000.pkl"
+AGENT_DIR = "gs://pref-extr-data/gridworld/saved_model2/"
+DATA_PATH = "gs://pref-extr-data/gridworld/simple_env_1/"
 INPUT_SHAPE = None
 
 data_pipeline.data_path = %DATA_PATH
-data_pipeline.env = "Doom"
+data_pipeline.from_file = False
+data_pipeline.env = "Gridworld"
 data_pipeline.rebalance = True
 
 extractor_type.extractor = @TfExtractor
