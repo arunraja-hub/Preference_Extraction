@@ -19,7 +19,7 @@ NUM_EVAL_EPISODES = 10
 CONV_LAYER_PARAMS = [[16, 3, 2]]
 FC_LAYER_PARAMS = [64]
 
-REPLAY_BUFFER_CAPACITY = 1000
+REPLAY_BUFFER_CAPACITY = 500
 trainer.train.train_sequence_length = 500
 
 trainer.train.train_checkpoint_interval = 1000
