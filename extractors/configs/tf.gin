@@ -5,32 +5,32 @@ INPUT_SHAPE = None
 data_pipeline.data_path = %DATA_PATH
 data_pipeline.from_file = False
 data_pipeline.env = "Gridworld"
-data_pipeline.rebalance = True
+data_pipeline.rebalance = False
 
 extractor_type.extractor = @TfExtractor
 
 extractor.train.do_summary = True
 Extractor.num_repeat = 10
 
-TfExtractor.extractor_fn = @agent_extractor
+TfExtractor.extractor_fn = @cnn_from_obs
 TfExtractor.num_train = 50
 TfExtractor.num_val = 500
 TfExtractor.epochs = 200
 TfExtractor.batch_size = 512
-TfExtractor.slowly_unfreezing = True
+TfExtractor.slowly_unfreezing = False
 
 SlowlyUnfreezing.unfreze_every_n_epochs = 10
 SlowlyUnfreezing.start_unfreezing_from = 3
 
 cnn_from_obs.input_shape = %INPUT_SHAPE
 cnn_from_obs.pick_random_col_ch = False
-cnn_from_obs.cnn_first_size = 16
-cnn_from_obs.cnn_last_size = 64
-cnn_from_obs.cnn_num_layers = 3
-cnn_from_obs.cnn_stride_every_n = 1
+cnn_from_obs.cnn_first_size = 64
+cnn_from_obs.cnn_last_size = 32
+cnn_from_obs.cnn_num_layers = 2
+cnn_from_obs.cnn_stride_every_n = 3
 cnn_from_obs.fc_first_size = 32
 cnn_from_obs.fc_last_size = 16
-cnn_from_obs.fc_num_layers = 2
+cnn_from_obs.fc_num_layers = 0
 cnn_from_obs.pooling = False
 cnn_from_obs.reg_amount = 0
 cnn_from_obs.drop_rate = 0

@@ -72,7 +72,7 @@ def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
 
 @gin.configurable
 def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n,
-                 fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate, pick_random_col_ch=False, pooling=False):
+                 fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate, pick_random_col_ch, pooling):
     """
        Simple Convolutional Neural Network
        that extracts preferences from observations
@@ -89,7 +89,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
             stride = 2
         else:
             stride = 1
-        layers.append(tf.keras.layers.Conv2D(layer_size, 3, strides=stride, activation='relu',
+        layers.append(tf.keras.layers.Conv2D(layer_size, 2, strides=stride, activation='relu',
                                              kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
 
     if pooling:
@@ -145,9 +145,9 @@ class TfExtractor(extractor.Extractor):
                  extractor_fn,
                  num_train,
                  num_val,
-                 slowly_unfreezing = False,
-                 epochs = 500,
-                 batch_size = 128):
+                 slowly_unfreezing,
+                 epochs,
+                 batch_size):
         super().__init__()
         print("Using TfExtractor", flush=True)
         
@@ -159,11 +159,13 @@ class TfExtractor(extractor.Extractor):
         self.slowly_unfreezing = slowly_unfreezing
 
     def train_single(self, xs_train, ys_train, xs_val, ys_val, do_summary):
-        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0)
+        tf.keras.backend.clear_session()
+        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=0)
         best_stats = BestStats()
         callbacks = [early_stopping, best_stats]
         if self.slowly_unfreezing:
             callbacks += [SlowlyUnfreezing()]
+
 
         model = self.extractor_fn()
         model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,

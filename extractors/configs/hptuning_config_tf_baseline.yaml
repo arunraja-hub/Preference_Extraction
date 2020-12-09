@@ -30,29 +30,29 @@ trainingInput:
         maxValue: 0.5
         scaleType: UNIT_LOG_SCALE
 
-      - parameterName: gin_bindings=cnn_from_obs.cnn_first_size
-        type: INTEGER
-        minValue: 2
-        maxValue: 64
-        scaleType: UNIT_LINEAR_SCALE
+#       - parameterName: gin_bindings=cnn_from_obs.cnn_first_size
+#         type: INTEGER
+#         minValue: 16
+#         maxValue: 64
+#         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=cnn_from_obs.cnn_last_size
-        type: INTEGER
-        minValue: 2
-        maxValue: 128
-        scaleType: UNIT_LINEAR_SCALE
+#       - parameterName: gin_bindings=cnn_from_obs.cnn_last_size
+#         type: INTEGER
+#         minValue: 16
+#         maxValue: 128
+#         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=cnn_from_obs.cnn_num_layers
-        type: INTEGER
-        minValue: 0
-        maxValue: 4
-        scaleType: UNIT_LINEAR_SCALE
+#       - parameterName: gin_bindings=cnn_from_obs.cnn_num_layers
+#         type: INTEGER
+#         minValue: 1
+#         maxValue: 4
+#         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=cnn_from_obs.cnn_stride_every_n
-        type: INTEGER
-        minValue: 1
-        maxValue: 3
-        scaleType: UNIT_LINEAR_SCALE
+#       - parameterName: gin_bindings=cnn_from_obs.cnn_stride_every_n
+#         type: INTEGER
+#         minValue: 1
+#         maxValue: 3
+#         scaleType: UNIT_LINEAR_SCALE
 
       - parameterName: gin_bindings=cnn_from_obs.fc_first_size
         type: INTEGER
@@ -71,3 +71,15 @@ trainingInput:
         minValue: 0
         maxValue: 4
         scaleType: UNIT_LINEAR_SCALE
+    
+      - parameterName: gin_bindings=cnn_from_obs.pick_random_col_ch
+        type: CATEGORICAL
+        categoricalValues:
+        - "True"
+        - "False"
+    
+      - parameterName: gin_bindings=cnn_from_obs.pooling
+        type: CATEGORICAL
+        categoricalValues:
+        - "True"
+        - "False"
