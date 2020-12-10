@@ -1,8 +1,8 @@
 # Usage:
 # Follow instructions at the Before you begin section of https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin
 # chmod +x launch_cloud.sh
-# ./launch_cloud.sh job_name dqn 0
-# ./launch_cloud.sh job_name dqn 1
+# ./launch_cloud.sh job_name pysc2 dqn 0
+# ./launch_cloud.sh job_name pysc2 dqn 1
 # for hparam tune.
 
 # This launches a new training on google cloud.
@@ -16,23 +16,23 @@ PROJECT_ID=preference-extraction
 IMAGE_URI=gcr.io/$PROJECT_ID/pref_extract_train_container:$JOB_NAME
 JOB_DIR=gs://$BUCKET_ID/$JOB_NAME
 
-docker build -f Dockerfile -t $IMAGE_URI ./
+docker build -f configs/$2/Dockerfile -t $IMAGE_URI ./
 echo "Container built. You can test localy with"
 echo "docker run $IMAGE_URI --job-dir ~/pref_ext_train/$JOB_NAME"
 
 echo "Pushing and launching"
 docker push $IMAGE_URI
 
-if [ $2 = "dqn" ]
+if [ $3 = "dqn" ]
 then
-  GIN_CONFIG="--gin_file configs/dqn.gin"
-  CLOUD_CONFIG="--config hptuning_config_dqn.yaml"
+  GIN_CONFIG="--gin_file configs/$2/dqn.gin"
+  CLOUD_CONFIG="--config configs/hptuning_config_dqn.yaml"
 else
-  GIN_CONFIG="--gin_file configs/ppo.gin"
-  CLOUD_CONFIG="--config hptuning_config_ppo.yaml"
+  GIN_CONFIG="--gin_file configs/$2/ppo.gin"
+  CLOUD_CONFIG="--config configs/hptuning_config_ppo.yaml"
 fi
 
-if [ $3 -eq 0 ]
+if [ $4 -eq 0 ]
 then
   CLOUD_CONFIG=""
 fi
