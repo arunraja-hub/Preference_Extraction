@@ -128,8 +128,6 @@ class TorchExtractor(extractor.Extractor):
                  input_shape,
                  subnet_k,
                  randomize_weights,
-                 num_train,
-                 num_val,
                  epochs = 500,
                  batch_size = 128,
                  learning_rate = 1e-2,
@@ -137,8 +135,6 @@ class TorchExtractor(extractor.Extractor):
         super().__init__()
         print("Using TorchExtractor", flush=True)
 
-        self.num_train = num_train
-        self.num_val = num_val
         self.epochs = epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -241,7 +237,6 @@ class TorchExtractor(extractor.Extractor):
         return accuracy, auc
 
     def _train(self, train_loader, optimizer, criterion):
-
         train_loss = 0
         true_labels = []
         predictions = []

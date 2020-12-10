@@ -43,3 +43,23 @@ DoomEnvironment.health_reward = .5
 DoomEnvironment.reward_divisor = 2000
 
 AnalyseAmmoWrapper.root_dir = %ROOT_DIR
+
+PySC2Environment.map_name = "MoveToBeacon"
+PySC2Environment.agent = "pysc2.agents.random_agent.RandomAgent"
+PySC2Environment.agent_name = None
+PySC2Environment.agent_race = "random"
+PySC2Environment.agent2 = "Bot"
+PySC2Environment.agent2_race = "random"
+PySC2Environment.difficulty = "very_easy"
+PySC2Environment.bot_build = "random"
+PySC2Environment.battle_net_map = False
+PySC2Environment.feature_screen_size = "84"
+PySC2Environment.feature_minimap_size = "64"
+PySC2Environment.rgb_screen_size = None
+PySC2Environment.rgb_minimap_size = None
+PySC2Environment.action_space = None
+PySC2Environment.use_feature_units = False
+PySC2Environment.use_raw_units = True
+PySC2Environment.step_mul = 8
+PySC2Environment.game_steps_per_episode = None
+PySC2Environment.disable_fog = True
