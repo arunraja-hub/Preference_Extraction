@@ -7,6 +7,9 @@ import numpy as np
 
 import hypertune
 
+def get_layer_sizes(first_size, last_size, num_layers):
+    return np.linspace(first_size, last_size, num_layers, dtype=np.int32)
+
 @gin.configurable
 class Extractor(object):
     def __init__(self, num_train, num_val, num_repeat = 5):

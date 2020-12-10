@@ -110,6 +110,7 @@ class AgentModel(nn.Module):
         self.module_list.to(device)
             
     def forward(self, x):
+        #  print("X", x.shape, flush=True)
         for ix, f in enumerate(self.module_list):
             x = f(x)
             if ix < len(self.module_list) - 2:
@@ -119,7 +120,7 @@ class AgentModel(nn.Module):
             elif ix == len(self.module_list) - 1:
                 x = torch.sigmoid(x) # Extractor layer uses sigmoid
         return x.flatten()
-    
+
 @gin.configurable
 class TorchExtractor(extractor.Extractor):
     
@@ -147,7 +148,42 @@ class TorchExtractor(extractor.Extractor):
         self.device = torch.device("cuda" if use_cuda else "cpu")
         
         self.model = None
-        self.create_agent_model(agent_path, input_shape, subnet_k, randomize_weights)
+        self.cnn_from_obs()
+
+    @gin.configurable
+    def cnn_from_obs(self, input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n,
+                 fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate,):
+        conv_layers = []
+
+        input_size = input_shape[0]
+        conv_layer_sizes = extractor.get_layer_sizes(cnn_first_size, cnn_last_size, cnn_num_layers)
+        for i, layer_size in enumerate(conv_layer_sizes):
+            if ((i + 1) % cnn_stride_every_n) == 0:
+                stride = 2
+            else:
+                stride = 1
+            conv_layers.append(nn.Conv2d(input_size, layer_size, 3, stride=stride))
+            conv_layers.append(nn.ReLU())
+            input_size = layer_size
+        conv_layers.append(nn.Flatten())
+
+        conv_model = nn.Sequential(*conv_layers)
+        conv_output_shape = conv_model(torch.randn([1] + input_shape)).shape
+
+        fc_layer_sizes = extractor.get_layer_sizes(fc_first_size, fc_last_size, fc_num_layers)
+
+        layers = [conv_model]
+        input_size = conv_output_shape[1]
+        for layer_size in fc_layer_sizes:
+            layers.append(torch.nn.Linear(input_size, layer_size))
+            layers.append(nn.ReLU())
+            input_size = layer_size
+        layers.append(torch.nn.Linear(input_size, 1))
+        layers.append(nn.Sigmoid())
+        layers.append(nn.Flatten(0))
+
+        self.model = nn.Sequential(*layers)
+
         
     def create_agent_model(self, agent_path, input_shape, subnet_k, randomize_weights):
         
@@ -183,7 +219,7 @@ class TorchExtractor(extractor.Extractor):
         torch_layers.append(nn.Linear(in_features=last_shape[-1], out_features=1, bias=True)) # last layer to transform output
         self.model = AgentModel(torch_layers)
         
-        if not randomize_weights:
+        if not True:
             self.model.load_agent_weigths(agent_submodel, self.device)
             if subnet_k == 1:
                 # Only verify weigths when extractor is not a subnetwork
