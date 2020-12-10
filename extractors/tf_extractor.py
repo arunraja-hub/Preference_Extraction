@@ -57,9 +57,6 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
             if ix >= 0:
                 self.model.layers[ix].trainable = True
 
-def get_layer_sizes(first_size, last_size, num_layers):
-    return np.linspace(first_size, last_size, num_layers, dtype=np.int32)
-
 def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
     layers = []
     for layer_size in fc_layer_sizes:
@@ -83,7 +80,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
         layers.append(tf.keras.layers.Lambda(lambda x: tf.expand_dims(
             x[:,:,:,tf.random.uniform((), 0,4, tf.int32)], 3), input_shape=input_shape))
 
-    conv_layer_sizes = get_layer_sizes(cnn_first_size, cnn_last_size, cnn_num_layers)
+    conv_layer_sizes = extractor.get_layer_sizes(cnn_first_size, cnn_last_size, cnn_num_layers)
     for i, layer_size in enumerate(conv_layer_sizes):
         if ((i+1) % cnn_stride_every_n) == 0:
             stride = 2
@@ -97,7 +94,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
 
     layers.append(tf.keras.layers.Flatten())
 
-    fc_layer_sizes = get_layer_sizes(fc_first_size, fc_last_size, fc_num_layers)
+    fc_layer_sizes = extractor.get_layer_sizes(fc_first_size, fc_last_size, fc_num_layers)
     layers.extend(get_dense_layers(fc_layer_sizes, reg_amount, drop_rate))
 
     model = tf.keras.models.Sequential(layers)
@@ -125,7 +122,7 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
     for ix, _ in enumerate(agent.layers[:agent_last_layer]):
         agent.layers[ix].trainable = ix not in agent_freezed_layers
 
-    fc_layer_sizes = get_layer_sizes(first_size, last_size, num_layers)
+    fc_layer_sizes = extractor.get_layer_sizes(first_size, last_size, num_layers)
     layers = get_dense_layers(fc_layer_sizes, reg_amount, drop_rate)
 
     model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers)
