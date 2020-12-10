@@ -8,6 +8,8 @@ data_pipeline.rebalance = True
 
 extractor.train.do_summary = True
 Extractor.num_repeat = 10
+Extractor.num_train = 50
+Extractor.num_val = 500
 
 extractor_type.extractor = @TorchExtractor
 
@@ -15,8 +17,6 @@ TorchExtractor.agent_path = %AGENT_DIR
 TorchExtractor.input_shape = %INPUT_SHAPE
 TorchExtractor.subnet_k = 0.75
 TorchExtractor.randomize_weights = False
-TorchExtractor.num_train = 50
-TorchExtractor.num_val = 500
 TorchExtractor.epochs = 100
 TorchExtractor.batch_size = 32
 TorchExtractor.learning_rate = 0.02

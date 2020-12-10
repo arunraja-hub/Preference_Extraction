@@ -9,12 +9,14 @@ import hypertune
 
 @gin.configurable
 class Extractor(object):
-    def __init__(self, num_repeat = 5):
+    def __init__(self, num_train, num_val, num_repeat = 5):
         self.num_repeat = num_repeat
+        self.num_train = num_train
+        self.num_val = num_val
 
     def train_single_shuffle(self, xs, ys, do_summary):
         """
-            Trains the model and retruns the logs of the best epoch.
+            Trains the model and reruns the logs of the best epoch.
             Randomly splits the train and val data before training.
         """
 

@@ -10,10 +10,10 @@ extractor_type.extractor = @TfExtractor
 
 extractor.train.do_summary = True
 Extractor.num_repeat = 10
+Extractor.num_train = 50
+Extractor.num_val = 500
 
 TfExtractor.extractor_fn = @agent_extractor
-TfExtractor.num_train = 50
-TfExtractor.num_val = 500
 TfExtractor.epochs = 200
 TfExtractor.batch_size = 512
 TfExtractor.slowly_unfreezing = True

@@ -143,17 +143,13 @@ class TfExtractor(extractor.Extractor):
     
     def __init__(self,
                  extractor_fn,
-                 num_train,
-                 num_val,
                  slowly_unfreezing = False,
                  epochs = 500,
                  batch_size = 128):
         super().__init__()
         print("Using TfExtractor", flush=True)
-        
+
         self.extractor_fn = extractor_fn
-        self.num_train = num_train
-        self.num_val = num_val
         self.epochs = epochs
         self.batch_size = batch_size
         self.slowly_unfreezing = slowly_unfreezing
