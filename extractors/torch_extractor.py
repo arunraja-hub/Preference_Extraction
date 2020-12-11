@@ -152,7 +152,7 @@ class TorchExtractor(extractor.Extractor):
 
     @gin.configurable
     def cnn_from_obs(self, input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n,
-                 fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate,):
+                 fc_first_size, fc_last_size, fc_num_layers, drop_rate):
         conv_layers = []
 
         input_size = input_shape[0]
@@ -164,6 +164,7 @@ class TorchExtractor(extractor.Extractor):
                 stride = 1
             conv_layers.append(nn.Conv2d(input_size, layer_size, 3, stride=stride))
             conv_layers.append(nn.ReLU())
+            conv_layers.append(nn.Dropout(p=drop_rate))
             input_size = layer_size
         conv_layers.append(nn.Flatten())
 
@@ -177,6 +178,7 @@ class TorchExtractor(extractor.Extractor):
         for layer_size in fc_layer_sizes:
             layers.append(torch.nn.Linear(input_size, layer_size))
             layers.append(nn.ReLU())
+            layers.append(nn.Dropout(p=drop_rate))
             input_size = layer_size
         layers.append(torch.nn.Linear(input_size, 1))
         layers.append(nn.Sigmoid())
