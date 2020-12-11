@@ -110,7 +110,6 @@ class AgentModel(nn.Module):
         self.module_list.to(device)
             
     def forward(self, x):
-        #  print("X", x.shape, flush=True)
         for ix, f in enumerate(self.module_list):
             x = f(x)
             if ix < len(self.module_list) - 2:
@@ -221,7 +220,7 @@ class TorchExtractor(extractor.Extractor):
         torch_layers.append(nn.Linear(in_features=last_shape[-1], out_features=1, bias=True)) # last layer to transform output
         self.model = AgentModel(torch_layers)
         
-        if not True:
+        if not randomize_weights:
             self.model.load_agent_weigths(agent_submodel, self.device)
             if subnet_k == 1:
                 # Only verify weigths when extractor is not a subnetwork
