@@ -10,7 +10,7 @@ trainingInput:
       - parameterName: gin_bindings=TfExtractor.model_fn
         type: CATEGORICAL
         categoricalValues:
-        - "@TfExtractor.agent_extractor"
+        - "@tf_extractor.agent_extractor"
 
       - parameterName: gin_bindings=agent_extractor.first_size
         type: INTEGER
