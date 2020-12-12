@@ -7,11 +7,26 @@ trainingInput:
     maxTrials: 60
     maxParallelTrials: 5
     params:
+      - parameterName: gin_bindings=DATA_PATH
+        type: CATEGORICAL
+        categoricalValues:
+        - "'gs://pref-extr-data/gridworld/saved_model2/'"
+        
       - parameterName: gin_bindings=AGENT_DIR
         type: CATEGORICAL
         categoricalValues:
         - "'gs://pref-extr-data/gridworld/simple_env_1/'"
-        
+
+      - parameterName: gin_bindings=data_pipeline.from_file
+        type: CATEGORICAL
+        categoricalValues:
+        - "False"
+
+      - parameterName: gin_bindings=data_pipeline.env
+        type: CATEGORICAL
+        categoricalValues:
+        - "Gridworld"
+
       - parameterName: gin_bindings=agent_extractor.first_size
         type: INTEGER
         minValue: 8
@@ -39,7 +54,6 @@ trainingInput:
       - parameterName: gin_bindings=TfExtractor.slowly_unfreezing
         type: CATEGORICAL
         categoricalValues:
-        - "True"
         - "False"
 
       - parameterName: gin_bindings=agent_extractor.agent_freezed_layers

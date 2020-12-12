@@ -71,15 +71,3 @@ trainingInput:
         minValue: 0
         maxValue: 4
         scaleType: UNIT_LINEAR_SCALE
-    
-      - parameterName: gin_bindings=cnn_from_obs.pick_random_col_ch
-        type: CATEGORICAL
-        categoricalValues:
-        - "True"
-        - "False"
-    
-      - parameterName: gin_bindings=cnn_from_obs.pooling
-        type: CATEGORICAL
-        categoricalValues:
-        - "True"
-        - "False"

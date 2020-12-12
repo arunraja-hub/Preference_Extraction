@@ -1,11 +1,11 @@
-AGENT_DIR = "gs://pref-extr-data/gridworld/saved_model2/"
-DATA_PATH = "gs://pref-extr-data/gridworld/simple_env_1/"
+AGENT_DIR = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000"
+DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_10000.pkl"
 INPUT_SHAPE = None
 
 data_pipeline.data_path = %DATA_PATH
-data_pipeline.from_file = False
-data_pipeline.env = "Gridworld"
-data_pipeline.rebalance = False
+data_pipeline.from_file = True
+data_pipeline.env = "Doom"
+data_pipeline.rebalance = True
 
 extractor_type.extractor = @TfExtractor
 
@@ -31,7 +31,7 @@ cnn_from_obs.cnn_stride_every_n = 3
 cnn_from_obs.kernel_size = 3
 cnn_from_obs.fc_first_size = 32
 cnn_from_obs.fc_last_size = 16
-cnn_from_obs.fc_num_layers = 0
+cnn_from_obs.fc_num_layers = 2
 cnn_from_obs.pooling = False
 cnn_from_obs.reg_amount = 0
 cnn_from_obs.drop_rate = 0

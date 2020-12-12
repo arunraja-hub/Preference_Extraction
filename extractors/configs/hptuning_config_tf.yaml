@@ -31,7 +31,7 @@ trainingInput:
         - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000'"
         - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000'"
         - "'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000'"
-
+        
       - parameterName: gin_bindings=agent_extractor.agent_last_layer
         type: INTEGER
         minValue: 3
