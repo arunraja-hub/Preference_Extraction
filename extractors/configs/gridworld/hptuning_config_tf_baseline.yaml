@@ -57,3 +57,8 @@ trainingInput:
         categoricalValues:
         - "True"
         - "False"
+        
+      - parameterName: gin_bindings=TfExtractor.slowly_unfreezing
+        type: CATEGORICAL
+        categoricalValues:
+        - "False"

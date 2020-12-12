@@ -17,7 +17,7 @@ Extractor.num_val = 500
 TfExtractor.extractor_fn = @agent_extractor
 TfExtractor.epochs = 200
 TfExtractor.batch_size = 512
-TfExtractor.slowly_unfreezing = False
+TfExtractor.slowly_unfreezing = True
 
 SlowlyUnfreezing.unfreze_every_n_epochs = 10
 SlowlyUnfreezing.start_unfreezing_from = 3
