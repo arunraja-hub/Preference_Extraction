@@ -6,9 +6,9 @@ data_pipeline.data_path = %DATA_PATH
 data_pipeline.env = "Doom"
 data_pipeline.rebalance = True
 
-extractor_type.extractor = @TfExtractor
+train_and_report_metrics.num_repeat = 10
+train_and_report_metrics.extractor_class = @TfExtractor
 
-Extractor.num_repeat = 10
 Extractor.num_train = 50
 Extractor.num_val = 500
 
@@ -20,19 +20,19 @@ TfExtractor.slowly_unfreezing = True
 SlowlyUnfreezing.unfreze_every_n_epochs = 10
 SlowlyUnfreezing.start_unfreezing_from = 3
 
-cnn_from_obs.input_shape = %INPUT_SHAPE
-cnn_from_obs.pick_random_col_ch = False
-cnn_from_obs.cnn_first_size = 16
-cnn_from_obs.cnn_last_size = 64
-cnn_from_obs.cnn_num_layers = 3
-cnn_from_obs.cnn_stride_every_n = 1
-cnn_from_obs.fc_first_size = 32
-cnn_from_obs.fc_last_size = 16
-cnn_from_obs.fc_num_layers = 2
-cnn_from_obs.pooling = False
-cnn_from_obs.reg_amount = 0
-cnn_from_obs.drop_rate = 0
-cnn_from_obs.learning_rate = .01
+tf_extractor.cnn_from_obs.input_shape = %INPUT_SHAPE
+tf_extractor.cnn_from_obs.pick_random_col_ch = False
+tf_extractor.cnn_from_obs.cnn_first_size = 16
+tf_extractor.cnn_from_obs.cnn_last_size = 64
+tf_extractor.cnn_from_obs.cnn_num_layers = 3
+tf_extractor.cnn_from_obs.cnn_stride_every_n = 1
+tf_extractor.cnn_from_obs.fc_first_size = 32
+tf_extractor.cnn_from_obs.fc_last_size = 16
+tf_extractor.cnn_from_obs.fc_num_layers = 2
+tf_extractor.cnn_from_obs.pooling = False
+tf_extractor.cnn_from_obs.reg_amount = 0
+tf_extractor.cnn_from_obs.drop_rate = 0
+tf_extractor.cnn_from_obs.learning_rate = .01
 
 agent_extractor.agent_path = %AGENT_DIR
 agent_extractor.agent_last_layer = 4

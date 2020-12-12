@@ -1,19 +1,15 @@
 import gin
 import gin.tf
-import tensorflow as tf
 import gin.tf.external_configurables
 
 import numpy as np
-
-import hypertune
 
 def get_layer_sizes(first_size, last_size, num_layers):
     return np.linspace(first_size, last_size, num_layers, dtype=np.int32)
 
 @gin.configurable
 class Extractor(object):
-    def __init__(self, num_train, num_val, num_repeat = 5):
-        self.num_repeat = num_repeat
+    def __init__(self, num_train, num_val):
         self.num_train = num_train
         self.num_val = num_val
 
@@ -34,33 +30,3 @@ class Extractor(object):
         ys_val = ys[self.num_train:self.num_train + self.num_val]
 
         return self.train_single(xs_train, ys_train, xs_val, ys_val)
-
-    @gin.configurable
-    def train(self, xs, ys):
-        """
-            Trains the model multiple times with the same parameters and returns the average metrics
-        """
-
-        all_val_auc = []
-        all_val_accuracy = []
-
-        for i in range(self.num_repeat):
-            single_train_metrics = self.train_single_shuffle(xs, ys)
-            all_val_auc.append(single_train_metrics['val_auc'])
-            all_val_accuracy.append(single_train_metrics['val_accuracy'])
-
-        metrics = {
-            "mean_val_auc": np.mean(all_val_auc),
-            "mean_val_accuracy": np.mean(all_val_accuracy),
-            "val_auc_std": np.std(all_val_auc),
-            "val_accuracy_std": np.std(all_val_accuracy)
-        }
-
-        print(metrics, flush=True)
-
-        hpt = hypertune.HyperTune()
-        hpt.report_hyperparameter_tuning_metric(
-            hyperparameter_metric_tag='mean_val_auc',
-            metric_value=metrics['mean_val_auc'])
-
-        return metrics
