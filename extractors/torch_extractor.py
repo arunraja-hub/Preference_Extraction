@@ -146,7 +146,7 @@ class TorchExtractor(extractor.Extractor):
         use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
         
-        self.model = None
+        self.cnn_from_obs()
 
     @gin.configurable
     def cnn_from_obs(self, input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n,
@@ -329,8 +329,6 @@ class TorchExtractor(extractor.Extractor):
         return tr_data_loader, val_data_loader
 
     def train_single(self, xs_train, ys_train, xs_val, ys_val):
-        self.cnn_from_obs()
-
         tr_data_loader, val_data_loader = self.get_data_loaders(xs_train, ys_train, xs_val, ys_val)
         
         # Normalise last layer using training data
