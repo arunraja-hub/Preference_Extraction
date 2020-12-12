@@ -257,8 +257,129 @@ class TorchExtractor(extractor.Extractor):
         torch.backends.cudnn.benchmark = False
         use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
-        
         self.model = model_fn(self.device)
+
+
+    @gin.configurable
+    def cnn_from_obs(self, input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n,
+                 fc_first_size, fc_last_size, fc_num_layers, drop_rate):
+        conv_layers = []
+
+        input_size = input_shape[0]
+        conv_layer_sizes = extractor.get_layer_sizes(cnn_first_size, cnn_last_size, cnn_num_layers)
+        for i, layer_size in enumerate(conv_layer_sizes):
+            if ((i + 1) % cnn_stride_every_n) == 0:
+                stride = 2
+            else:
+                stride = 1
+            conv_layers.append(nn.Conv2d(input_size, layer_size, 3, stride=stride))
+            conv_layers.append(nn.ReLU())
+            conv_layers.append(nn.Dropout(p=drop_rate))
+            input_size = layer_size
+        conv_layers.append(nn.Flatten())
+
+        conv_model = nn.Sequential(*conv_layers)
+        conv_output_shape = conv_model(torch.randn([1] + input_shape)).shape
+
+        fc_layer_sizes = extractor.get_layer_sizes(fc_first_size, fc_last_size, fc_num_layers)
+
+        layers = conv_layers
+        input_size = conv_output_shape[1]
+        for layer_size in fc_layer_sizes:
+            layers.append(torch.nn.Linear(input_size, layer_size))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(p=drop_rate))
+            input_size = layer_size
+        layers.append(torch.nn.Linear(input_size, 1))
+        layers.append(nn.Sigmoid())
+        layers.append(nn.Flatten(0))
+        
+        self.model = nn.Sequential(*layers)
+        
+        for m in self.model.named_parameters():
+            if isinstance(m, nn.Conv2d):
+                torch.nn.init.xavier_uniform_(m.weight)
+                if m.bias:
+                    torch.nn.init.zeros_(m.bias)
+            if isinstance(m, nn.Linear):
+                torch.nn.init.xavier_uniform_(m.weight)
+                if m.bias:
+                    torch.nn.init.xavier_uniform_(m.bias)
+
+        
+    def create_agent_model(self, agent_path, input_shape, subnet_k, randomize_weights):
+        
+        agent = tf.keras.models.load_model(agent_path)
+        x = tf.keras.Input(shape=input_shape)
+        agent_submodel = tf.keras.Model(inputs=[x], outputs=agent.call(x))
+        agent_submodel.summary()
+        for ix, layer in enumerate(agent.layers):  # Make sure agent and agent_subnet has same weights
+            agent_submodel.layers[ix+1].set_weights(layer.get_weights())
+        
+        torch_layers = []
+        for ix, layer in enumerate(agent_submodel.layers):
+            if isinstance(layer, tf.keras.layers.InputLayer):
+                last_shape = layer.output_shape[0]
+            
+            elif isinstance(layer, tf.keras.layers.Conv2D):
+                torch_layer = SupermaskConv(in_channels=last_shape[-1], out_channels=layer.filters,
+                                            kernel_size=layer.kernel_size, stride=layer.strides, bias=True, k=subnet_k)
+                torch_layers.append(torch_layer)
+                last_shape = layer.output_shape
+                
+            elif isinstance(layer, tf.keras.layers.Flatten):
+                torch_layers.append(nn.Flatten())
+                last_shape = layer.output_shape
+                
+            elif isinstance(layer, tf.keras.layers.Dense):
+                torch_layer = SupermaskLinear(in_features=last_shape[-1], out_features=layer.weights[0].shape[-1],
+                                              bias=True, k=subnet_k)
+                torch_layers.append(torch_layer)            
+                last_shape = layer.output_shape
+                
+                
+        torch_layers.append(nn.Linear(in_features=last_shape[-1], out_features=1, bias=True)) # last layer to transform output
+        self.model = AgentModel(torch_layers)
+        
+        if not True:
+            self.model.load_agent_weigths(agent_submodel, self.device)
+            if subnet_k == 1:
+                # Only verify weigths when extractor is not a subnetwork
+                # Otherwise the activations differ too much
+                self.verify_weights(agent_submodel, agent, input_shape)
+            
+    def verify_weights(self, agent_submodel, agent, input_shape):
+        """
+            Method to verify correctness of agent_sumodel weigths
+            And of new torch network weigths
+        """
+        def check_same(torch_layers, tf_layer):
+            x = random_obs_torch
+            for lx, f in enumerate(torch_layers):
+                x = f(x)
+                if lx < len(self.model.module_list) - 2:
+                    x = nn.functional.relu(x)
+            torch_out = x.detach().cpu().numpy()
+            tf_out = tf_layer(random_obs).numpy()
+            if len(tf_out.shape) > 2:
+                tf_out = np.rollaxis(tf_out, 3, 1)            
+            np.testing.assert_allclose(torch_out, tf_out, rtol=.1, atol=5)
+            # This testing values are relatively close, but I cannot satify anything tighter
+            # Why are torch activations so 'relatively' different from tf ones
+            # TODO: investigate if there is something missing in the tf-torch translation
+        
+        for _ in range(10):
+            random_obs = np.random.random(size=(1,) + input_shape)
+            random_obs_torch = torch.Tensor(np.rollaxis(random_obs, 3, 1))  # torch wants channel first
+
+            assert (agent_submodel(random_obs).numpy() == agent(random_obs).numpy()).all()
+
+            for ix, layer in enumerate(agent_submodel.layers):
+                if ix == 0:
+                    continue
+                tf_sub_model = tf.keras.models.Model(inputs=agent_submodel.input, outputs=layer.output)
+                check_same(self.model.module_list[:ix], tf_sub_model)        
+>>>>>>> Rics local edits
     
     """
        Train/Test function for Randomly Weighted Hidden Neural Networks Techniques
@@ -342,7 +463,7 @@ class TorchExtractor(extractor.Extractor):
             lr=self.learning_rate, weight_decay=self.weight_decay)
         
         criterion = nn.BCELoss().to(self.device)
-        scheduler = CosineAnnealingLR(optimizer, T_max=len(tr_data_loader))
+        #scheduler = CosineAnnealingLR(optimizer, T_max=len(tr_data_loader))
 
         train_losses, test_losses = [], []
         train_accs, test_accs = [], []
@@ -355,7 +476,7 @@ class TorchExtractor(extractor.Extractor):
         for epoch in range(self.epochs):
             train_loss, train_accuracy, train_auc = self._train(tr_data_loader, optimizer, criterion)
             test_loss, test_accuracy, test_auc = self._test(val_data_loader, criterion)
-            scheduler.step()
+            #scheduler.step()
             if test_loss < best_test_loss:
                 best_test_loss = test_loss
                 test_loss_up_since = 0

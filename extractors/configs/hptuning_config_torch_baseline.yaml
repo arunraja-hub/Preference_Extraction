@@ -18,11 +18,11 @@ trainingInput:
         maxValue: 0.1
         scaleType: UNIT_LOG_SCALE
 
-      - parameterName: gin_bindings=TorchExtractor.weight_decay
-        type: DOUBLE
-        minValue: 0.00001
-        maxValue: 0.2
-        scaleType: UNIT_LOG_SCALE
+#       - parameterName: gin_bindings=TorchExtractor.weight_decay
+#         type: DOUBLE
+#         minValue: 0.00001
+#         maxValue: 0.2
+#         scaleType: UNIT_LOG_SCALE
 
       - parameterName: gin_bindings=torch_extractor.cnn_from_obs.drop_rate
         type: DOUBLE
