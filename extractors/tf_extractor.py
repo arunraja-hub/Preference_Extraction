@@ -74,6 +74,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
        Simple Convolutional Neural Network
        that extracts preferences from observations
     """
+    print("TF cnn_from_obs")
     layers = []
     if pick_random_col_ch:
          # layer to get one of the color channels. It works better than using all of them in the gridworld
@@ -118,6 +119,7 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
         Builds a network to extract preferences
         From the RL agent originally trained in the enviroment
     """
+    print("TF agent_extractor")
     agent = tf.keras.models.load_model(agent_path)
     for ix, _ in enumerate(agent.layers[:agent_last_layer]):
         agent.layers[ix].trainable = ix not in agent_freezed_layers
@@ -139,14 +141,14 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
 class TfExtractor(extractor.Extractor):
     
     def __init__(self,
-                 extractor_fn,
+                 model_fn,
                  slowly_unfreezing = False,
                  epochs = 500,
                  batch_size = 128):
         super().__init__()
         print("Using TfExtractor", flush=True)
 
-        self.extractor_fn = extractor_fn
+        self.model = model_fn()
         self.epochs = epochs
         self.batch_size = batch_size
         self.slowly_unfreezing = slowly_unfreezing
@@ -158,11 +160,10 @@ class TfExtractor(extractor.Extractor):
         if self.slowly_unfreezing:
             callbacks += [SlowlyUnfreezing()]
 
-        model = self.extractor_fn()
-        model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
+        self.model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
                   callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
 
-        model.summary()
+        self.model.summary()
         print("best train accuracy:", best_stats.bestTrain)
         print("Number of epochs:", best_stats.num_epochs, flush=True)
 
