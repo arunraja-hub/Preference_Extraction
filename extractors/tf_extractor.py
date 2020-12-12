@@ -71,7 +71,7 @@ def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
     return layers
 
 @gin.configurable
-def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n,
+def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n, kernel_size,
                  fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate, pick_random_col_ch, pooling):
     """
        Simple Convolutional Neural Network
@@ -89,7 +89,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
             stride = 2
         else:
             stride = 1
-        layers.append(tf.keras.layers.Conv2D(layer_size, 2, strides=stride, activation='relu',
+        layers.append(tf.keras.layers.Conv2D(layer_size, kernel_size, strides=stride, activation='relu',
                                              kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
 
     if pooling:

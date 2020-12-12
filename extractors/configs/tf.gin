@@ -28,6 +28,7 @@ cnn_from_obs.cnn_first_size = 64
 cnn_from_obs.cnn_last_size = 32
 cnn_from_obs.cnn_num_layers = 2
 cnn_from_obs.cnn_stride_every_n = 3
+cnn_from_obs.kernel_size = 3
 cnn_from_obs.fc_first_size = 32
 cnn_from_obs.fc_last_size = 16
 cnn_from_obs.fc_num_layers = 0
