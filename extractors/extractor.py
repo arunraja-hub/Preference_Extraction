@@ -17,7 +17,7 @@ class Extractor(object):
         self.num_train = num_train
         self.num_val = num_val
 
-    def train_single_shuffle(self, xs, ys, do_summary):
+    def train_single_shuffle(self, xs, ys):
         """
             Trains the model and reruns the logs of the best epoch.
             Randomly splits the train and val data before training.
@@ -33,10 +33,10 @@ class Extractor(object):
         xs_val = xs[self.num_train:self.num_train + self.num_val]
         ys_val = ys[self.num_train:self.num_train + self.num_val]
 
-        return self.train_single(xs_train, ys_train, xs_val, ys_val, do_summary)
+        return self.train_single(xs_train, ys_train, xs_val, ys_val)
 
     @gin.configurable
-    def train(self, xs, ys, do_summary):
+    def train(self, xs, ys):
         """
             Trains the model multiple times with the same parameters and returns the average metrics
         """
@@ -45,7 +45,7 @@ class Extractor(object):
         all_val_accuracy = []
 
         for i in range(self.num_repeat):
-            single_train_metrics = self.train_single_shuffle(xs, ys, do_summary=do_summary and (i == 0))
+            single_train_metrics = self.train_single_shuffle(xs, ys)
             all_val_auc.append(single_train_metrics['val_auc'])
             all_val_accuracy.append(single_train_metrics['val_accuracy'])
 
@@ -56,8 +56,7 @@ class Extractor(object):
             "val_accuracy_std": np.std(all_val_accuracy)
         }
 
-        if do_summary:
-            print(metrics, flush=True)
+        print(metrics, flush=True)
 
         hpt = hypertune.HyperTune()
         hpt.report_hyperparameter_tuning_metric(

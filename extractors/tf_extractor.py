@@ -151,7 +151,7 @@ class TfExtractor(extractor.Extractor):
         self.batch_size = batch_size
         self.slowly_unfreezing = slowly_unfreezing
 
-    def train_single(self, xs_train, ys_train, xs_val, ys_val, do_summary):
+    def train_single(self, xs_train, ys_train, xs_val, ys_val):
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0)
         best_stats = BestStats()
         callbacks = [early_stopping, best_stats]
@@ -162,9 +162,8 @@ class TfExtractor(extractor.Extractor):
         model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
                   callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
 
-        if do_summary:
-            model.summary()
-            print("best train accuracy:", best_stats.bestTrain)
-            print("Number of epochs:", best_stats.num_epochs, flush=True)
+        model.summary()
+        print("best train accuracy:", best_stats.bestTrain)
+        print("Number of epochs:", best_stats.num_epochs, flush=True)
 
         return {'val_auc': get_val_auc(best_stats.bestLogs), 'val_accuracy': best_stats.bestLogs.get('val_accuracy')}
