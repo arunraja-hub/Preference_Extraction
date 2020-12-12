@@ -147,7 +147,6 @@ class TorchExtractor(extractor.Extractor):
         self.device = torch.device("cuda" if use_cuda else "cpu")
         
         self.model = None
-        self.cnn_from_obs()
 
     @gin.configurable
     def cnn_from_obs(self, input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n,
@@ -329,7 +328,9 @@ class TorchExtractor(extractor.Extractor):
 
         return tr_data_loader, val_data_loader
 
-    def train_single(self, xs_train, ys_train, xs_val, ys_val, do_summary):
+    def train_single(self, xs_train, ys_train, xs_val, ys_val):
+        self.cnn_from_obs()
+
         tr_data_loader, val_data_loader = self.get_data_loaders(xs_train, ys_train, xs_val, ys_val)
         
         # Normalise last layer using training data
@@ -350,8 +351,7 @@ class TorchExtractor(extractor.Extractor):
         best_test_loss = np.inf
         test_loss_up_since = 0
         early_stop = 50
-        verbose = False
-        
+
         for epoch in range(self.epochs):
             train_loss, train_accuracy, train_auc = self._train(tr_data_loader, optimizer, criterion)
             test_loss, test_accuracy, test_auc = self._test(val_data_loader, criterion)
@@ -363,10 +363,6 @@ class TorchExtractor(extractor.Extractor):
             if test_loss_up_since > early_stop:
                 print('Epoch - ', epoch, 'Early stopping')
                 break
-            if verbose:
-                print('Epoch - ', epoch)
-                print('Train metrics: loss', train_loss, 'accuracy', train_accuracy, 'auc', train_auc)
-                print('Val metrics: loss', test_loss, 'accuracy', test_accuracy, 'auc', test_auc)
 
             train_losses.append(train_loss)
             test_losses.append(test_loss)
@@ -379,7 +375,6 @@ class TorchExtractor(extractor.Extractor):
                 'train_accuracy': train_accs[-1], 'val_accuracy': test_accs[-1],
                 'train_auc': train_aucs[-1], 'val_auc': test_aucs[-1]}
 
-        if do_summary:
-            print(metrics, flush=True)
+        print(metrics, flush=True)
 
         return metrics

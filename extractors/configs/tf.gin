@@ -9,7 +9,6 @@ data_pipeline.rebalance = True
 
 extractor_type.extractor = @TfExtractor
 
-extractor.train.do_summary = True
 Extractor.num_repeat = 10
 Extractor.num_train = 50
 Extractor.num_val = 500
