@@ -7,10 +7,10 @@ trainingInput:
     maxTrials: 60
     maxParallelTrials: 5
     params:
-      - parameterName: gin_bindings=TfExtractor.extractor_fn
+      - parameterName: gin_bindings=TfExtractor.model_fn
         type: CATEGORICAL
         categoricalValues:
-        - "@cnn_from_obs"
+        - "@TfExtractor.model_fncnn_from_obs"
 
       - parameterName: gin_bindings=cnn_from_obs.learning_rate
         type: DOUBLE

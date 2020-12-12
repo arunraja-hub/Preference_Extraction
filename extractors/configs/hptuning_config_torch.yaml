@@ -7,6 +7,10 @@ trainingInput:
     maxTrials: 60
     maxParallelTrials: 5
     params:
+      - parameterName: gin_bindings=TorchExtractor.model_fn
+        type: CATEGORICAL
+        categoricalValues:
+        - "@torch_extractor.agent_model"
 
       - parameterName: gin_bindings=AGENT_DIR
         type: CATEGORICAL
