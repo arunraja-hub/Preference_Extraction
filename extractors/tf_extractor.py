@@ -9,6 +9,8 @@ import numpy as np
 
 import extractor
 
+from tensorflow.python.keras.utils import losses_utils
+
 def get_val_auc(logs):
     for key in logs:
         if key.startswith('val_auc'):
@@ -31,11 +33,11 @@ class BestStats(tf.keras.callbacks.Callback):
             return 
         
         val_auc = get_val_auc(logs)
-        metric = (val_accuracy + val_auc) / 2.0
+        metric = val_auc #(val_accuracy + val_auc) / 2.0
         
-        if metric > self.bestMetric:
-            self.bestMetric = metric
-            self.bestLogs = logs
+        #if metric > self.bestMetric:
+        self.bestMetric = metric
+        self.bestLogs = logs
 
 @gin.configurable
 class SlowlyUnfreezing(tf.keras.callbacks.Callback):
@@ -89,6 +91,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
             stride = 1
         layers.append(tf.keras.layers.Conv2D(layer_size, kernel_size, strides=stride, activation='relu',
                                              kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+        layers.append(tf.keras.layers.Dropout(drop_rate))
 
     if pooling:
         layers.append(tf.keras.layers.GlobalAveragePooling2D())
@@ -99,8 +102,12 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
     layers.extend(get_dense_layers(fc_layer_sizes, reg_amount, drop_rate))
 
     model = tf.keras.models.Sequential(layers)
+    
+    loss = tf.keras.losses.BinaryCrossentropy(
+        from_logits=False, label_smoothing=0, reduction=losses_utils.ReductionV2.SUM,
+        name='binary_crossentropy')
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate), loss='binary_crossentropy',
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate), loss=loss,
                   metrics=['accuracy', tf.keras.metrics.AUC()])
 
     return model
@@ -163,7 +170,7 @@ class TfExtractor(extractor.Extractor):
             callbacks += [SlowlyUnfreezing()]
 
         self.model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
-                  callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
+                       callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
 
         self.model.summary()
         print("best train accuracy:", best_stats.bestTrain)

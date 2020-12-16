@@ -26,14 +26,14 @@ tf_extractor.cnn_from_obs.pick_random_col_ch = False
 tf_extractor.cnn_from_obs.cnn_first_size = 16
 tf_extractor.cnn_from_obs.cnn_last_size = 64
 tf_extractor.cnn_from_obs.cnn_num_layers = 3
-tf_extractor.cnn_from_obs.cnn_stride_every_n = 1
+tf_extractor.cnn_from_obs.cnn_stride_every_n = 3
 tf_extractor.cnn_from_obs.fc_first_size = 32
 tf_extractor.cnn_from_obs.fc_last_size = 16
 tf_extractor.cnn_from_obs.fc_num_layers = 2
 tf_extractor.cnn_from_obs.pooling = False
 tf_extractor.cnn_from_obs.reg_amount = 0
 tf_extractor.cnn_from_obs.drop_rate = 0
-tf_extractor.cnn_from_obs.learning_rate = .01
+tf_extractor.cnn_from_obs.learning_rate = 0.02
 
 
 agent_extractor.agent_path = %AGENT_DIR

@@ -144,7 +144,8 @@ def cnn_from_obs(device, input_shape, cnn_first_size, cnn_last_size, cnn_num_lay
 
     fc_layer_sizes = extractor.get_layer_sizes(fc_first_size, fc_last_size, fc_num_layers)
 
-    layers = [conv_model]
+    layers = conv_layers
+
     input_size = conv_output_shape[1]
     for layer_size in fc_layer_sizes:
         layers.append(torch.nn.Linear(input_size, layer_size))
@@ -154,11 +155,23 @@ def cnn_from_obs(device, input_shape, cnn_first_size, cnn_last_size, cnn_num_lay
     layers.append(torch.nn.Linear(input_size, 1))
     layers.append(nn.Sigmoid())
     layers.append(nn.Flatten(0))
+    
+    model = nn.Sequential(*layers)
+    
+    for m in model.named_parameters():
+        if isinstance(m, nn.Conv2d):
+            torch.nn.init.xavier_uniform_(m.weight)
+            if m.bias:
+                torch.nn.init.zeros_(m.bias)
+        if isinstance(m, nn.Linear):
+            torch.nn.init.xavier_uniform_(m.weight)
+            if m.bias:
+                torch.nn.init.xavier_uniform_(m.bias)
 
-    return nn.Sequential(*layers)
+    return model
 
 @gin.configurable
-def agent_model(device, agent_path, input_shape, subnet_k, randomize_weights):
+def agent_model(device, agent_path, input_shape, subnet_k, scores_init, randomize_weights):
     print("Torch agent_model", flush=True)
 
     agent = tf.keras.models.load_model(agent_path)
@@ -174,8 +187,8 @@ def agent_model(device, agent_path, input_shape, subnet_k, randomize_weights):
             last_shape = layer.output_shape[0]
 
         elif isinstance(layer, tf.keras.layers.Conv2D):
-            torch_layer = SupermaskConv(in_channels=last_shape[-1], out_channels=layer.filters,
-                                        kernel_size=layer.kernel_size, stride=layer.strides, bias=True, k=subnet_k)
+            torch_layer = SupermaskConv(in_channels=last_shape[-1], out_channels=layer.filters, kernel_size=layer.kernel_size,
+                                        stride=layer.strides, bias=True, k=subnet_k, scores_init=scores_init)
             torch_layers.append(torch_layer)
             last_shape = layer.output_shape
 
@@ -185,12 +198,13 @@ def agent_model(device, agent_path, input_shape, subnet_k, randomize_weights):
 
         elif isinstance(layer, tf.keras.layers.Dense):
             torch_layer = SupermaskLinear(in_features=last_shape[-1], out_features=layer.weights[0].shape[-1],
-                                          bias=True, k=subnet_k)
+                                          bias=True, k=subnet_k, scores_init=scores_init)
             torch_layers.append(torch_layer)
             last_shape = layer.output_shape
-
-    torch_layers.append(
-        nn.Linear(in_features=last_shape[-1], out_features=1, bias=True))  # last layer to transform output
+    
+    # last layer to transform output
+    torch_layers.append(nn.Linear(in_features=last_shape[-1], out_features=1, bias=True))
+        
     model = AgentModel(torch_layers)
 
     if not randomize_weights:
@@ -462,7 +476,7 @@ class TorchExtractor(extractor.Extractor):
             [p for p in self.model.parameters() if p.requires_grad],
             lr=self.learning_rate, weight_decay=self.weight_decay)
         
-        criterion = nn.BCELoss().to(self.device)
+        criterion = nn.BCELoss(reduction='sum').to(self.device)
         #scheduler = CosineAnnealingLR(optimizer, T_max=len(tr_data_loader))
 
         train_losses, test_losses = [], []
@@ -493,8 +507,8 @@ class TorchExtractor(extractor.Extractor):
             test_aucs.append(test_auc)
 
         metrics = {'train_loss': train_losses[-1], 'val_loss': test_losses[-1],
-                'train_accuracy': train_accs[-1], 'val_accuracy': test_accs[-1],
-                'train_auc': train_aucs[-1], 'val_auc': test_aucs[-1]}
+                   'train_accuracy': train_accs[-1], 'val_accuracy': test_accs[-1],
+                   'train_auc': train_aucs[-1], 'val_auc': test_aucs[-1]}
 
         print(metrics, flush=True)
 

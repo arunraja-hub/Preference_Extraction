@@ -14,8 +14,8 @@ trainingInput:
 
       - parameterName: gin_bindings=TorchExtractor.learning_rate
         type: DOUBLE
-        minValue: 0.001
-        maxValue: 0.1
+        minValue: .001
+        maxValue: .1
         scaleType: UNIT_LOG_SCALE
 
 #       - parameterName: gin_bindings=TorchExtractor.weight_decay
