@@ -3,6 +3,7 @@ DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_da
 INPUT_SHAPE = None
 
 data_pipeline.data_path = %DATA_PATH
+data_pipeline.from_file = True
 data_pipeline.env = "Doom"
 data_pipeline.rebalance = True
 
@@ -23,10 +24,11 @@ SlowlyUnfreezing.start_unfreezing_from = 3
 
 cnn_from_obs.input_shape = %INPUT_SHAPE
 cnn_from_obs.pick_random_col_ch = False
-cnn_from_obs.cnn_first_size = 16
-cnn_from_obs.cnn_last_size = 64
-cnn_from_obs.cnn_num_layers = 3
-cnn_from_obs.cnn_stride_every_n = 1
+cnn_from_obs.cnn_first_size = 64
+cnn_from_obs.cnn_last_size = 32
+cnn_from_obs.cnn_num_layers = 2
+cnn_from_obs.cnn_stride_every_n = 3
+cnn_from_obs.kernel_size = 3
 cnn_from_obs.fc_first_size = 32
 cnn_from_obs.fc_last_size = 16
 cnn_from_obs.fc_num_layers = 2

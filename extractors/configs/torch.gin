@@ -3,6 +3,7 @@ DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_da
 INPUT_SHAPE = None
 
 data_pipeline.data_path = %DATA_PATH
+data_pipeline.from_file = True
 data_pipeline.env = "Doom"
 data_pipeline.rebalance = True
 
@@ -17,7 +18,7 @@ TorchExtractor.agent_path = %AGENT_DIR
 TorchExtractor.input_shape = %INPUT_SHAPE
 TorchExtractor.subnet_k = 0.75
 TorchExtractor.randomize_weights = False
-TorchExtractor.epochs = 100
-TorchExtractor.batch_size = 32
+TorchExtractor.epochs = 200
+TorchExtractor.batch_size = 512
 TorchExtractor.learning_rate = 0.02
 TorchExtractor.weight_decay = 0

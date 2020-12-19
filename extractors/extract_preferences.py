@@ -23,12 +23,12 @@ flags.DEFINE_multi_string('gin_bindings', None, 'Gin binding to pass through.')
 FLAGS = flags.FLAGS
 
 @gin.configurable
-def data_pipeline(data_path, env='doom', rebalance=True):
-    if not os.path.isdir(data_path):
+def data_pipeline(data_path, from_file=True, env='doom', rebalance=True):
+    if from_file:
         data = get_data_from_file(data_path)
     else: # for data as list of trajectory files
         data = get_data_from_folder(data_path)
-    
+
     xs, ys = transform_to_x_y(data, env=env)
     if rebalance:
         xs, ys = rebalance_data_to_minority_class(xs, ys)
