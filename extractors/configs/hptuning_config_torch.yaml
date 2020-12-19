@@ -41,10 +41,10 @@ trainingInput:
       - parameterName: gin_bindings=torch_extractor.agent_model.scores_init
         type: CATEGORICAL
         categoricalValues:
-        - "kaiming_normal"
-        - "kaiming_uniform"
-        - "xavier_normal"
-        - "uniform"
+        - "'kaiming_normal'"
+        - "'kaiming_uniform'"
+        - "'xavier_normal'"
+        - "'uniform'"
 
       - parameterName: gin_bindings=torch_extractor.agent_model.randomize_weights
         type: CATEGORICAL

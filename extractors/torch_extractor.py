@@ -52,7 +52,7 @@ def get_initializer(initializer_type):
     elif initializer_type == 'best_activation':
         return nn.init.ones_, {}
     else:
-        return nn.init.uniform_
+        return nn.init.uniform_, {}
 
 class SupermaskConv(nn.Conv2d):
     def __init__(self, *args, k, scores_init='kaiming_uniform', **kwargs):
