@@ -3,7 +3,7 @@ import numpy as np
 DOOM_HUMAN_MAX_ANGLE = 90
 DOOM_HUMAN_MIN_ANGLE = 270
 
-def transform_to_x_y(raw_data, env, shuffle_data = True):
+def transform_to_x_y(raw_data, env):
     """
         Takes in raw trajectories data and returns processed xs and ys
     """
@@ -29,13 +29,8 @@ def transform_to_x_y(raw_data, env, shuffle_data = True):
 
     xs = np.array(xs)
     ys = np.array(ys).astype(int)
-    
-    if shuffle_data:
-        randomize = np.arange(len(xs))
-        np.random.shuffle(randomize)
-        xs = xs[randomize]
-        ys = ys[randomize]
-        
+    print("xs", xs.shape, "ys", ys.shape)
+    print("ys 1", np.sum(ys))
     return xs, ys
     
 def rebalance_data_to_minority_class(xs, ys):
