@@ -1,3 +1,7 @@
+# ./launch_cloud_repo.sh previous_experirment_name trial_num
+# Example:
+# ./launch_cloud_repo.sh hptuning_config_torch_save_gin_6900954 31
+
 PRE_JOB_NAME=$1
 TRIAL_NUM=$2
 JOB_NAME="repo_${PRE_JOB_NAME}_trial${TRIAL_NUM}"_$(($(date +%s)-1601800000)) ;
