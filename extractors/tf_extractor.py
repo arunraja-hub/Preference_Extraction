@@ -57,9 +57,6 @@ class SlowlyUnfreezing(tf.keras.callbacks.Callback):
             if ix >= 0:
                 self.model.layers[ix].trainable = True
 
-def get_layer_sizes(first_size, last_size, num_layers):
-    return np.linspace(first_size, last_size, num_layers, dtype=np.int32)
-
 def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
     layers = []
     for layer_size in fc_layer_sizes:
@@ -77,13 +74,14 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
        Simple Convolutional Neural Network
        that extracts preferences from observations
     """
+    print("TF cnn_from_obs")
     layers = []
     if pick_random_col_ch:
          # layer to get one of the color channels. It works better than using all of them in the gridworld
         layers.append(tf.keras.layers.Lambda(lambda x: tf.expand_dims(
             x[:,:,:,tf.random.uniform((), 0,4, tf.int32)], 3), input_shape=input_shape))
 
-    conv_layer_sizes = get_layer_sizes(cnn_first_size, cnn_last_size, cnn_num_layers)
+    conv_layer_sizes = extractor.get_layer_sizes(cnn_first_size, cnn_last_size, cnn_num_layers)
     for i, layer_size in enumerate(conv_layer_sizes):
         if ((i+1) % cnn_stride_every_n) == 0:
             stride = 2
@@ -97,7 +95,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
 
     layers.append(tf.keras.layers.Flatten())
 
-    fc_layer_sizes = get_layer_sizes(fc_first_size, fc_last_size, fc_num_layers)
+    fc_layer_sizes = extractor.get_layer_sizes(fc_first_size, fc_last_size, fc_num_layers)
     layers.extend(get_dense_layers(fc_layer_sizes, reg_amount, drop_rate))
 
     model = tf.keras.models.Sequential(layers)
@@ -121,11 +119,12 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
         Builds a network to extract preferences
         From the RL agent originally trained in the enviroment
     """
+    print("TF agent_extractor")
     agent = tf.keras.models.load_model(agent_path)
     for ix, _ in enumerate(agent.layers[:agent_last_layer]):
         agent.layers[ix].trainable = ix not in agent_freezed_layers
 
-    fc_layer_sizes = get_layer_sizes(first_size, last_size, num_layers)
+    fc_layer_sizes = extractor.get_layer_sizes(first_size, last_size, num_layers)
     layers = get_dense_layers(fc_layer_sizes, reg_amount, drop_rate)
 
     model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers)
@@ -142,34 +141,30 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
 class TfExtractor(extractor.Extractor):
     
     def __init__(self,
-                 extractor_fn,
+                 model_fn,
                  slowly_unfreezing = False,
                  epochs,
                  batch_size):
         super().__init__()
         print("Using TfExtractor", flush=True)
 
-        self.extractor_fn = extractor_fn
+        self.model = model_fn()
         self.epochs = epochs
         self.batch_size = batch_size
         self.slowly_unfreezing = slowly_unfreezing
 
-    def train_single(self, xs_train, ys_train, xs_val, ys_val, do_summary):
-        tf.keras.backend.clear_session()
+    def train_single(self, xs_train, ys_train, xs_val, ys_val):
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=0)
         best_stats = BestStats()
         callbacks = [early_stopping, best_stats]
         if self.slowly_unfreezing:
             callbacks += [SlowlyUnfreezing()]
 
-
-        model = self.extractor_fn()
-        model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
+        self.model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
                   callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
 
-        if do_summary:
-            model.summary()
-            print("best train accuracy:", best_stats.bestTrain)
-            print("Number of epochs:", best_stats.num_epochs, flush=True)
+        self.model.summary()
+        print("best train accuracy:", best_stats.bestTrain)
+        print("Number of epochs:", best_stats.num_epochs, flush=True)
 
         return {'val_auc': get_val_auc(best_stats.bestLogs), 'val_accuracy': best_stats.bestLogs.get('val_accuracy')}

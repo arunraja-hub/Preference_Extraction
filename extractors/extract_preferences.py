@@ -12,6 +12,9 @@ import gin.tf
 import tensorflow as tf
 import gin.tf.external_configurables
 
+import hypertune
+import numpy as np
+
 from data_getter import get_data_from_file, get_data_from_folder
 from data_processing import transform_to_x_y, rebalance_data_to_minority_class
 
@@ -36,8 +39,35 @@ def data_pipeline(data_path, from_file=True, env='doom', rebalance=True):
     return xs, ys
 
 @gin.configurable
-def extractor_type(extractor):
-    return extractor()
+def train_and_report_metrics(xs, ys, num_repeat, extractor_class):
+    """
+        Trains the model multiple times with the same parameters and returns the average metrics
+    """
+
+    all_val_auc = []
+    all_val_accuracy = []
+
+    for i in range(num_repeat):
+        single_train_metrics = extractor_class().train_single_shuffle(xs, ys)
+
+        all_val_auc.append(single_train_metrics['val_auc'])
+        all_val_accuracy.append(single_train_metrics['val_accuracy'])
+
+    metrics = {
+        "mean_val_auc": np.mean(all_val_auc),
+        "mean_val_accuracy": np.mean(all_val_accuracy),
+        "val_auc_std": np.std(all_val_auc),
+        "val_accuracy_std": np.std(all_val_accuracy)
+    }
+
+    print(metrics, flush=True)
+
+    hpt = hypertune.HyperTune()
+    hpt.report_hyperparameter_tuning_metric(
+        hyperparameter_metric_tag='mean_val_auc',
+        metric_value=metrics['mean_val_auc'])
+
+    return metrics
 
 def main(_):
     logging.set_verbosity(logging.INFO)
@@ -50,9 +80,8 @@ def main(_):
     
     with gin.unlock_config():
         gin.bind_parameter('%INPUT_SHAPE', xs.shape[1:])
-    
-    extractor = extractor_type()
-    extractor.train(xs, ys)
+
+    train_and_report_metrics(xs, ys)
 
 if __name__ == '__main__':
     flags.mark_flag_as_required('gin_file')

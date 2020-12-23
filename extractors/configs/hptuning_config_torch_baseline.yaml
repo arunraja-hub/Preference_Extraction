@@ -7,66 +7,66 @@ trainingInput:
     maxTrials: 60
     maxParallelTrials: 5
     params:
-      - parameterName: gin_bindings=TfExtractor.model_fn
+      - parameterName: gin_bindings=TorchExtractor.model_fn
         type: CATEGORICAL
         categoricalValues:
-        - "@tf_extractor.cnn_from_obs"
+        - "@torch_extractor.cnn_from_obs"
 
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.learning_rate
+      - parameterName: gin_bindings=TorchExtractor.learning_rate
         type: DOUBLE
-        minValue: .001
-        maxValue: .1
+        minValue: 0.001
+        maxValue: 0.1
         scaleType: UNIT_LOG_SCALE
 
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.reg_amount
+      - parameterName: gin_bindings=TorchExtractor.weight_decay
         type: DOUBLE
         minValue: 0.00001
         maxValue: 0.2
         scaleType: UNIT_LOG_SCALE
-        
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.drop_rate
+
+      - parameterName: gin_bindings=torch_extractor.cnn_from_obs.drop_rate
         type: DOUBLE
         minValue: 0.00001
         maxValue: 0.5
         scaleType: UNIT_LOG_SCALE
 
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_first_size
+      - parameterName: gin_bindings=torch_extractor.cnn_from_obs.cnn_first_size
         type: INTEGER
         minValue: 2
         maxValue: 64
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_last_size
+      - parameterName: gin_bindings=torch_extractor.cnn_from_obs.cnn_last_size
         type: INTEGER
         minValue: 2
         maxValue: 128
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_num_layers
+      - parameterName: gin_bindings=torch_extractor.cnn_from_obs.cnn_num_layers
         type: INTEGER
         minValue: 0
         maxValue: 4
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_stride_every_n
+      - parameterName: gin_bindings=torch_extractor.cnn_from_obs.cnn_stride_every_n
         type: INTEGER
         minValue: 1
         maxValue: 3
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_first_size
+      - parameterName: gin_bindings=torch_extractor.cnn_from_obs.fc_first_size
         type: INTEGER
         minValue: 8
         maxValue: 128
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_last_size
+      - parameterName: gin_bindings=torch_extractor.cnn_from_obs.fc_last_size
         type: INTEGER
         minValue: 4
         maxValue: 32
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_num_layers
+      - parameterName: gin_bindings=torch_extractor.cnn_from_obs.fc_num_layers
         type: INTEGER
         minValue: 0
         maxValue: 4

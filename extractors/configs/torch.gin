@@ -7,18 +7,29 @@ data_pipeline.from_file = True
 data_pipeline.env = "Doom"
 data_pipeline.rebalance = True
 
-extractor.train.do_summary = True
-Extractor.num_repeat = 10
 Extractor.num_train = 50
 Extractor.num_val = 500
 
-extractor_type.extractor = @TorchExtractor
+train_and_report_metrics.num_repeat = 10
+train_and_report_metrics.extractor_class = @TorchExtractor
 
-TorchExtractor.agent_path = %AGENT_DIR
-TorchExtractor.input_shape = %INPUT_SHAPE
-TorchExtractor.subnet_k = 0.75
-TorchExtractor.randomize_weights = False
-TorchExtractor.epochs = 200
-TorchExtractor.batch_size = 512
-TorchExtractor.learning_rate = 0.02
-TorchExtractor.weight_decay = 0
+TorchExtractor.model_fn = @torch_extractor.agent_model
+TorchExtractor.epochs = 100
+TorchExtractor.batch_size = 32
+TorchExtractor.learning_rate = 0.001
+TorchExtractor.weight_decay = 0.00113
+
+torch_extractor.cnn_from_obs.input_shape = [6, 60, 100]
+torch_extractor.cnn_from_obs.cnn_first_size = 2
+torch_extractor.cnn_from_obs.cnn_last_size = 2
+torch_extractor.cnn_from_obs.cnn_num_layers = 1
+torch_extractor.cnn_from_obs.cnn_stride_every_n = 3
+torch_extractor.cnn_from_obs.fc_first_size = 76
+torch_extractor.cnn_from_obs.fc_last_size = 22
+torch_extractor.cnn_from_obs.fc_num_layers = 0
+torch_extractor.cnn_from_obs.drop_rate = 0.00001
+
+torch_extractor.agent_model.agent_path = %AGENT_DIR
+torch_extractor.agent_model.input_shape = %INPUT_SHAPE
+torch_extractor.agent_model.subnet_k = 0.75
+torch_extractor.agent_model.randomize_weights = False

@@ -7,6 +7,11 @@ trainingInput:
     maxTrials: 60
     maxParallelTrials: 5
     params:
+      - parameterName: gin_bindings=TfExtractor.model_fn
+        type: CATEGORICAL
+        categoricalValues:
+        - "@tf_extractor.agent_extractor"
+
       - parameterName: gin_bindings=agent_extractor.first_size
         type: INTEGER
         minValue: 8
