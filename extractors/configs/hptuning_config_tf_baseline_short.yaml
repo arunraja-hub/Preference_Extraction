@@ -1,0 +1,85 @@
+trainingInput:
+  scaleTier: CUSTOM
+  masterType: n1-standard-4
+  hyperparameters:
+    goal: MAXIMIZE
+    hyperparameterMetricTag: mean_val_auc
+    maxTrials: 5
+    maxParallelTrials: 5
+    params:
+      - parameterName: gin_bindings=TfExtractor.model_fn
+        type: CATEGORICAL
+        categoricalValues:
+        - "@tf_extractor.cnn_from_obs"
+
+      - parameterName: gin_bindings=train_and_report_metrics.num_repeat
+        type: INTEGER
+        minValue: 1
+        maxValue: 1
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=TfExtractor.epochs
+        type: INTEGER
+        minValue: 2
+        maxValue: 2
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.learning_rate
+        type: DOUBLE
+        minValue: .001
+        maxValue: .1
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.reg_amount
+        type: DOUBLE
+        minValue: 0.00001
+        maxValue: 0.2
+        scaleType: UNIT_LOG_SCALE
+        
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.drop_rate
+        type: DOUBLE
+        minValue: 0.00001
+        maxValue: 0.5
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_first_size
+        type: INTEGER
+        minValue: 2
+        maxValue: 64
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_last_size
+        type: INTEGER
+        minValue: 2
+        maxValue: 128
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_num_layers
+        type: INTEGER
+        minValue: 0
+        maxValue: 4
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_stride_every_n
+        type: INTEGER
+        minValue: 1
+        maxValue: 3
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_first_size
+        type: INTEGER
+        minValue: 8
+        maxValue: 128
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_last_size
+        type: INTEGER
+        minValue: 4
+        maxValue: 32
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_num_layers
+        type: INTEGER
+        minValue: 0
+        maxValue: 4
+        scaleType: UNIT_LINEAR_SCALE

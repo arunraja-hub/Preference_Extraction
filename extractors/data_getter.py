@@ -3,7 +3,7 @@ import pickle
 import concurrent.futures
 from tensorflow.python.lib.io import file_io
 from tf_agents.trajectories.trajectory import Trajectory
-from google.cloud import storage
+# from google.cloud import storage
 
 class ListWrapper(object):
     def __init__(self, list_to_wrap):

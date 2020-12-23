@@ -73,6 +73,7 @@ def train_and_report_metrics(xs, ys, num_repeat, extractor_class):
     return metrics
 
 def main(_):
+    print("FLAGS.root_dir", FLAGS.root_dir)
     logging.set_verbosity(logging.INFO)
     tf.compat.v1.enable_resource_variables()
     tf.compat.v2.enable_v2_behavior()
