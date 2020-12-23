@@ -42,7 +42,7 @@ def data_pipeline(data_path, from_file=True, env='doom', rebalance=True):
     return xs, ys
 
 @gin.configurable
-def train_and_report_metrics(xs, ys, num_repeat, extractor_class):
+def train_and_report_metrics(xs, ys, num_repeat, extractor_class, useless_var_for_hparam_search=None):
     """
         Trains the model multiple times with the same parameters and returns the average metrics
     """

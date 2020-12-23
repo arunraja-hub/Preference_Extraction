@@ -1,0 +1,14 @@
+trainingInput:
+  scaleTier: CUSTOM
+  masterType: n1-standard-4
+  hyperparameters:
+    goal: MAXIMIZE
+    hyperparameterMetricTag: mean_val_auc
+    maxTrials: 2
+    maxParallelTrials: 2
+    params:
+      - parameterName: gin_bindings=train_and_report_metrics.useless_var_for_hparam_search
+        type: DOUBLE
+        minValue: 1
+        maxValue: 10
+        scaleType: UNIT_LOG_SCALE
