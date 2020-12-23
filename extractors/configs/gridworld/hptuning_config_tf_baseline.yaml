@@ -1,0 +1,64 @@
+trainingInput:
+  scaleTier: CUSTOM
+  masterType: n1-standard-4
+  hyperparameters:
+    goal: MAXIMIZE
+    hyperparameterMetricTag: mean_val_auc
+    maxTrials: 60
+    maxParallelTrials: 5
+    params:
+      - parameterName: gin_bindings=AGENT_DIR
+        type: CATEGORICAL
+        categoricalValues:
+        - "'gs://pref-extr-data/gridworld/simple_env_1/'"
+
+      - parameterName: gin_bindings=TfExtractor.extractor_fn
+        type: CATEGORICAL
+        categoricalValues:
+        - "@cnn_from_obs"
+
+      - parameterName: gin_bindings=cnn_from_obs.learning_rate
+        type: DOUBLE
+        minValue: .001
+        maxValue: .1
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=cnn_from_obs.reg_amount
+        type: DOUBLE
+        minValue: 0.00001
+        maxValue: 0.2
+        scaleType: UNIT_LOG_SCALE
+        
+      - parameterName: gin_bindings=cnn_from_obs.drop_rate
+        type: DOUBLE
+        minValue: 0.00001
+        maxValue: 0.5
+        scaleType: UNIT_LOG_SCALE
+
+      - parameterName: gin_bindings=cnn_from_obs.kernel_size
+        type: INTEGER
+        minValue: 2
+        maxValue: 3
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=cnn_from_obs.fc_num_layers
+        type: CATEGORICAL
+        categoricalValues:
+        - "0"
+    
+      - parameterName: gin_bindings=cnn_from_obs.pick_random_col_ch
+        type: CATEGORICAL
+        categoricalValues:
+        - "True"
+        - "False"
+    
+      - parameterName: gin_bindings=cnn_from_obs.pooling
+        type: CATEGORICAL
+        categoricalValues:
+        - "True"
+        - "False"
+        
+      - parameterName: gin_bindings=TfExtractor.slowly_unfreezing
+        type: CATEGORICAL
+        categoricalValues:
+        - "False"

@@ -4,15 +4,9 @@ trainingInput:
   hyperparameters:
     goal: MAXIMIZE
     hyperparameterMetricTag: AverageReturn
-    maxTrials: 40
+    maxTrials: 10
     maxParallelTrials: 5
     params:
-      - parameterName: gin_bindings=DoomEnvironment.frame_skip
-        type: INTEGER
-        minValue: 2
-        maxValue: 6
-        scaleType: UNIT_LINEAR_SCALE
-
       - parameterName: gin_bindings=critic/tf.train.AdamOptimizer.learning_rate
         type: DOUBLE
         minValue: 0.0001
