@@ -1,5 +1,5 @@
 AGENT_DIR = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000"
-DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_10000.pkl"
+DATA_PATH = "gs://pref-extr-data/doom/data/train_val_data_1.pkl"
 INPUT_SHAPE = None
 
 data_pipeline.data_path = %DATA_PATH

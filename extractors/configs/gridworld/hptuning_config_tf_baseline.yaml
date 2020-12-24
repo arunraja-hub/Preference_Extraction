@@ -10,7 +10,7 @@ trainingInput:
       - parameterName: gin_bindings=DATA_PATH
         type: CATEGORICAL
         categoricalValues:
-        - "'gs://pref-extr-data/gridworld/simple_env_1/'"
+        - "'gs://pref-extr-data/gridworld/data/train_val_data_1.pkl'"
 
       - parameterName: gin_bindings=TfExtractor.extractor_fn
         type: CATEGORICAL
