@@ -15,8 +15,8 @@ class Extractor(object):
 
     def train_single_shuffle(self, xs, ys):
         """
-            Trains the model and reruns the logs of the best epoch.
-            Randomly splits the train and val data before training.
+        Trains the model and reruns the logs of the best epoch.
+        Randomly splits the train and val data before training.
         """
 
         randomize = np.arange(len(xs))

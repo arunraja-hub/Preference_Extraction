@@ -3,7 +3,7 @@ import pickle
 import concurrent.futures
 from tensorflow.python.lib.io import file_io
 from tf_agents.trajectories.trajectory import Trajectory
-# from google.cloud import storage
+from google.cloud import storage
 
 class ListWrapper(object):
     def __init__(self, list_to_wrap):
@@ -54,3 +54,8 @@ def get_data_from_folder(base_path):
     
     return raw_data
 
+def write_file(file_path, data_object):
+    with file_io.FileIO(file_path, mode='wb') as fOut:
+        pickle.dump(file_path, fOut, protocol=4)
+        
+            

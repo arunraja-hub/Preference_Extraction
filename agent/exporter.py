@@ -146,5 +146,5 @@ class Exporter(object):
         
         file_path = os.path.join(save_dir, f'exp_data_{steps}.pkl')
         with file_io.FileIO(file_path, mode='wb') as f:
-            pickle.dump([exp_data], f)
+            pickle.dump([exp_data], f, protocol=4)
         
