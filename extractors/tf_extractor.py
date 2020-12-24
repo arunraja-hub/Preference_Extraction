@@ -149,7 +149,7 @@ class TfExtractor(extractor.Extractor):
     
     def __init__(self,
                  model_fn,
-                 slowly_unfreezing = False,
+                 slowly_unfreezing,
                  epochs,
                  batch_size):
         super().__init__()

@@ -7,12 +7,12 @@ trainingInput:
     maxTrials: 60
     maxParallelTrials: 5
     params:
-      - parameterName: gin_bindings=DATA_PATH
+      - parameterName: gin_bindings=AGENT_DIR
         type: CATEGORICAL
         categoricalValues:
-        - "'gs://pref-extr-data/gridworld/saved_model2/'"
+        - "'gs://pref-extr-data/gridworld/saved_model2'"
         
-      - parameterName: gin_bindings=AGENT_DIR
+      - parameterName: gin_bindings=DATA_PATH
         type: CATEGORICAL
         categoricalValues:
         - "'gs://pref-extr-data/gridworld/simple_env_1/'"
@@ -25,22 +25,18 @@ trainingInput:
       - parameterName: gin_bindings=data_pipeline.env
         type: CATEGORICAL
         categoricalValues:
-        - "Gridworld"
+        - "'Gridworld'"
 
-      - parameterName: gin_bindings=TorchExtractor.subnet_k
+      - parameterName: gin_bindings=TorchExtractor.model_fn
         type: CATEGORICAL
         categoricalValues:
-        - "0.01"
-        - "0.1"
-        - "0.25"
-        - "0.5"
-        - "0.75"
+        - "@torch_extractor.agent_model"
 
-      - parameterName: gin_bindings=TorchExtractor.randomize_weights
-        type: CATEGORICAL
-        categoricalValues:
-        - "True"
-        - "False"
+      - parameterName: gin_bindings=TorchExtractor.weight_decay
+        type: DOUBLE
+        minValue: 0.00001
+        maxValue: 0.2
+        scaleType: UNIT_LOG_SCALE
         
       - parameterName: gin_bindings=TorchExtractor.learning_rate
         type: DOUBLE
@@ -48,3 +44,23 @@ trainingInput:
         minValue: 0.001
         maxValue: 0.1
         scaleType: UNIT_LOG_SCALE
+        
+      - parameterName: gin_bindings=torch_extractor.agent_model.subnet_k
+        type: DOUBLE
+        minValue: 0.01
+        maxValue: 0.99
+        scaleType: UNIT_LINEAR_SCALE
+        
+      - parameterName: gin_bindings=torch_extractor.agent_model.scores_init
+        type: CATEGORICAL
+        categoricalValues:
+        - "'kaiming_normal'"
+        - "'kaiming_uniform'"
+        - "'xavier_normal'"
+        - "'uniform'"
+
+      - parameterName: gin_bindings=torch_extractor.agent_model.randomize_weights
+        type: CATEGORICAL
+        categoricalValues:
+        - "True"
+        - "False"
