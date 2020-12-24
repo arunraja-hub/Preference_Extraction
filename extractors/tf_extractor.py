@@ -63,6 +63,10 @@ def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
 
     return layers
 
+def custom_loss():
+    return tf.keras.losses.BinaryCrossentropy(from_logits=False, label_smoothing=0, name='binary_crossentropy',
+                                              reduction=losses_utils.ReductionV2.SUM_OVER_BATCH_SIZE)
+
 @gin.configurable
 def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n, kernel_size,
                  fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate, pick_random_col_ch, pooling):
@@ -96,7 +100,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
 
     model = tf.keras.models.Sequential(layers)
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate), loss='binary_crossentropy',
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate), loss=custom_loss(),
                   metrics=['accuracy', tf.keras.metrics.AUC()])
 
     return model
@@ -125,7 +129,7 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
 
     model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers)
     
-    model.compile(optimizer=tf.keras.optimizers.Adam(.01), loss='binary_crossentropy',
+    model.compile(optimizer=tf.keras.optimizers.Adam(.01), loss=custom_loss(),
                   metrics=['accuracy', tf.keras.metrics.AUC()])
     
     if randomize_weights:
