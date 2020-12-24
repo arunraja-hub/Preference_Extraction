@@ -13,7 +13,7 @@ train_and_report_metrics.extractor_class = @TfExtractor
 Extractor.num_train = 50
 Extractor.num_val = 500
 
-TfExtractor.model_fn = @tf_extractor.agent_extractor
+TfExtractor.model_fn = @tf_extractor.cnn_from_obs
 TfExtractor.epochs = 200
 TfExtractor.batch_size = 512
 TfExtractor.slowly_unfreezing = False

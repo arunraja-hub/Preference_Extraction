@@ -11,6 +11,11 @@ trainingInput:
         type: CATEGORICAL
         categoricalValues:
         - "@tf_extractor.cnn_from_obs"
+        
+      - parameterName: gin_bindings=TfExtractor.slowly_unfreezing
+        type: CATEGORICAL
+        categoricalValues:
+        - "False"
 
       - parameterName: gin_bindings=tf_extractor.cnn_from_obs.learning_rate
         type: DOUBLE

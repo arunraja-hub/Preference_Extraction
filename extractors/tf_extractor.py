@@ -57,7 +57,9 @@ def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
     layers = []
     for layer_size in fc_layer_sizes:
         layers.append(tf.keras.layers.Dense(layer_size, activation='relu',
-                                              kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+                                            kernel_regularizer=tf.keras.regularizers.l2(reg_amount),
+                                            kernel_initializer=tf.keras.initializers.VarianceScaling(),
+                                            bias_initializer=tf.keras.initializers.RandomUniform()))
         layers.append(tf.keras.layers.Dropout(drop_rate))
     layers.append(tf.keras.layers.Dense(1, activation='sigmoid', kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
 
@@ -93,9 +95,14 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
         else:
             stride = 1
         layers.append(tf.keras.layers.Conv2D(layer_size, kernel_size, strides=stride, activation='relu',
-                                             kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+                                             kernel_regularizer=tf.keras.regularizers.l2(reg_amount),
+                                             kernel_initializer=tf.keras.initializers.VarianceScaling(),
+                                             bias_initializer=tf.keras.initializers.RandomUniform()))
         layers.append(tf.keras.layers.Dropout(drop_rate))
 
+        
+
+        
     if pooling:
         layers.append(tf.keras.layers.GlobalAveragePooling2D())
 
