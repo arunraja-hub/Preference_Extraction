@@ -150,6 +150,7 @@ class TfExtractor(extractor.Extractor):
         self.slowly_unfreezing = slowly_unfreezing
 
     def train_single(self, xs_train, ys_train, xs_val, ys_val):
+        tf.keras.backend.clear_session()
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=0)
         stats = LastStats()
         callbacks = [early_stopping, stats]
