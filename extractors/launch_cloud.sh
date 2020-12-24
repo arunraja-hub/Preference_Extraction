@@ -1,10 +1,10 @@
 # Usage:
 # Follow instructions at the Before you begin section of https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin
 # chmod +x launch_cloud.sh
-# ./launch_cloud.sh name tf.gin hptuning_config_tf_baseline.yaml
-# ./launch_cloud.sh name torch.gin hptuning_config_torch.yaml
-# ./launch_cloud.sh name torch.gin hptuning_config_torch_baseline.yaml
-# ./launch_cloud.sh name tf.gin hptuning_config_tf.yaml
+# ./launch_cloud.sh save_gin tf.gin hptuning_config_tf_baseline.yaml
+# ./launch_cloud.sh save_gin torch.gin hptuning_config_torch.yaml
+# ./launch_cloud.sh save_gin torch.gin hptuning_config_torch_baseline.yaml
+# ./launch_cloud.sh save_gin tf.gin hptuning_config_tf.yaml
 # for hparam tune.
 
 # This launches a new training on google cloud.
@@ -30,10 +30,13 @@ echo "docker run $IMAGE_URI $GIN_CONFIG"
 CLOUD_CONFIG="--config configs/$3"
 GIN_CONFIG="--gin_file configs/$2"
 
+echo "JOB_DIR $JOB_DIR"
+
 # Regions: asia-east1 asia-east2 asia-northeast1 asia-northeast2 asia-northeast3 asia-south1 asia-southeast1 asia-southeast2 australia-southeast1
-gcloud beta ai-platform jobs submit training $JOB_NAME \
-  --region asia-south1 \
+gcloud ai-platform jobs submit training $JOB_NAME \
+  --region asia-northeast3 \
   --master-image-uri $IMAGE_URI \
+  --job-dir $JOB_DIR \
   $CLOUD_CONFIG \
   -- $GIN_CONFIG
 

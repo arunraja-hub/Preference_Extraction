@@ -21,6 +21,9 @@ from data_processing import transform_to_x_y, rebalance_data_to_minority_class
 from tf_extractor import TfExtractor
 from torch_extractor import TorchExtractor
 
+flags.DEFINE_string('root_dir', os.getenv('TEST_UNDECLARED_OUTPUTS_DIR'),
+                    'Root directory for writing logs/summaries/checkpoints.')
+flags.DEFINE_alias('job-dir', 'root_dir')
 flags.DEFINE_multi_string('gin_file', None, 'Paths to the study config file.')
 flags.DEFINE_multi_string('gin_bindings', None, 'Gin binding to pass through.')
 FLAGS = flags.FLAGS
@@ -39,7 +42,7 @@ def data_pipeline(data_path, from_file=True, env='doom', rebalance=True):
     return xs, ys
 
 @gin.configurable
-def train_and_report_metrics(xs, ys, num_repeat, extractor_class):
+def train_and_report_metrics(xs, ys, num_repeat, extractor_class, useless_var_for_hparam_search=None):
     """
         Trains the model multiple times with the same parameters and returns the average metrics
     """
@@ -70,6 +73,7 @@ def train_and_report_metrics(xs, ys, num_repeat, extractor_class):
     return metrics
 
 def main(_):
+    print("FLAGS.root_dir", FLAGS.root_dir)
     logging.set_verbosity(logging.INFO)
     tf.compat.v1.enable_resource_variables()
     tf.compat.v2.enable_v2_behavior()
@@ -82,6 +86,10 @@ def main(_):
         gin.bind_parameter('%INPUT_SHAPE', xs.shape[1:])
 
     train_and_report_metrics(xs, ys)
+
+    config_filename = os.path.join(FLAGS.root_dir, 'operative_config-final.gin')
+    with tf.io.gfile.GFile(config_filename, 'wb') as f:
+        f.write(gin.operative_config_str())
 
 if __name__ == '__main__':
     flags.mark_flag_as_required('gin_file')
