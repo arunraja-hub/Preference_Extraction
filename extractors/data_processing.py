@@ -81,11 +81,11 @@ def reshuffle_data(xs, ys):
 if __name__ == "__main__":
     
     # pre-training data creation
-    data_path = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_20000.pkl"
-    from_file = True
-    env = "Doom"
+    data_path = "gs://pref-extr-data/gridworld/simple_env_1/"
+    from_file = False
+    env = "gridworld"
     rebalance = True
-    data_version = '1'
+    data_version = '1' # increase this if you want to create new versions of the data
     gcs_bucket = 'gs://pref-extr-data/{}/'.format(env.lower())
     
     xs, ys = data_pipeline(data_path=data_path, from_file=from_file, env=env, rebalance=rebalance)
@@ -94,13 +94,12 @@ if __name__ == "__main__":
     # create train_train, train_validate, test_train, test_validate datasets
     trn_size = 50
     val_size = 500
-    no_of_train_runs = 10
-    no_of_test_runs = 2
+    no_of_runs = 10
     
-    xs_train = xs[:(trn_size+val_size)*no_of_train_runs]
-    ys_train = ys[:(trn_size+val_size)*no_of_train_runs]
-    xs_test = xs[(trn_size+val_size)*no_of_train_runs:(trn_size+val_size)*(no_of_train_runs+no_of_test_runs)]
-    ys_test = ys[(trn_size+val_size)*no_of_train_runs:(trn_size+val_size)*(no_of_train_runs+no_of_test_runs)]
+    xs_train = xs[:(trn_size+val_size)*no_of_runs]
+    ys_train = ys[:(trn_size+val_size)*no_of_runs]
+    xs_test = xs[(trn_size+val_size)*no_of_runs:(trn_size+val_size)*(no_of_runs*2)]
+    ys_test = ys[(trn_size+val_size)*no_of_runs:(trn_size+val_size)*(no_of_runs+2)]
     
     print('Train shapes', xs_train.shape, ys_train.shape)
     print('Test shapes', xs_test.shape, ys_test.shape)

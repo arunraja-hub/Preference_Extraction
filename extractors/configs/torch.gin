@@ -3,9 +3,6 @@ DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_da
 INPUT_SHAPE = None
 
 data_pipeline.data_path = %DATA_PATH
-data_pipeline.from_file = True
-data_pipeline.env = "Doom"
-data_pipeline.rebalance = True
 
 Extractor.num_train = 50
 Extractor.num_val = 500

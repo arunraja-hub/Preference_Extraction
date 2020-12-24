@@ -56,6 +56,6 @@ def get_data_from_folder(base_path):
 
 def write_file(file_path, data_object):
     with file_io.FileIO(file_path, mode='wb') as fOut:
-        pickle.dump(file_path, fOut, protocol=4)
+        pickle.dump(data_object, fOut, protocol=4)
         
             
