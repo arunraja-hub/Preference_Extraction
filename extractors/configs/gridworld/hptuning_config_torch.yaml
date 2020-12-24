@@ -28,13 +28,10 @@ trainingInput:
         - "Gridworld"
 
       - parameterName: gin_bindings=torch_extractor.agent_model.subnet_k
-        type: CATEGORICAL
-        categoricalValues:
-        - "0.01"
-        - "0.1"
-        - "0.25"
-        - "0.5"
-        - "0.75"
+        type: DOUBLE
+        minValue: 0.01
+        maxValue: 0.99
+        scaleType: UNIT_LINEAR_SCALE
 
       - parameterName: gin_bindings=torch_extractor.agent_model.scores_init
         type: CATEGORICAL
