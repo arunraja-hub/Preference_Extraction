@@ -65,11 +65,16 @@ def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
 
 def custom_loss():
     return tf.keras.losses.BinaryCrossentropy(from_logits=False, label_smoothing=0, name='binary_crossentropy',
-                                              reduction=losses_utils.ReductionV2.SUM_OVER_BATCH_SIZE)
+                                              reduction=tf.keras.losses.Reduction.SUM_OVER_BATCH_SIZE)
+
+def cosine_anneal_lr(initial_lr, t_max):
+    return tf.keras.experimental.CosineDecay(initial_lr, t_max)
+
 
 @gin.configurable
 def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n, kernel_size,
-                 fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate, pick_random_col_ch, pooling):
+                 fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate, cosine_anneal_t_max,
+                 pick_random_col_ch, pooling):
     """
        Simple Convolutional Neural Network
        that extracts preferences from observations
@@ -101,8 +106,8 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
 
     model = tf.keras.models.Sequential(layers)
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate), loss=custom_loss(),
-                  metrics=['accuracy', tf.keras.metrics.AUC()])
+    model.compile(optimizer=tf.keras.optimizers.Adam(cosine_anneal_lr(learning_rate, cosine_anneal_t_max)), 
+                  loss=custom_loss(), metrics=['accuracy', tf.keras.metrics.AUC()])
 
     return model
 
@@ -114,8 +119,8 @@ def reset_model_weights(model):
             keras_layer.set_weights([weights, biases])
 
 @gin.configurable            
-def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, 
-                    first_size, last_size, num_layers, reg_amount, drop_rate, randomize_weights):
+def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, first_size, last_size, num_layers, 
+                    reg_amount, drop_rate, learning_rate, cosine_anneal_t_max, randomize_weights):
     """
         Builds a network to extract preferences
         From the RL agent originally trained in the enviroment
@@ -130,8 +135,8 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
 
     model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers)
     
-    model.compile(optimizer=tf.keras.optimizers.Adam(.01), loss=custom_loss(),
-                  metrics=['accuracy', tf.keras.metrics.AUC()])
+    model.compile(optimizer=tf.keras.optimizers.Adam(cosine_anneal_lr(learning_rate, cosine_anneal_t_max)), 
+                  loss=custom_loss(), metrics=['accuracy', tf.keras.metrics.AUC()])
     
     if randomize_weights:
         reset_model_weights(model)

@@ -13,11 +13,11 @@ Extractor.num_val = 500
 train_and_report_metrics.num_repeat = 10
 train_and_report_metrics.extractor_class = @TorchExtractor
 
-TorchExtractor.model_fn = @torch_extractor.agent_model
-TorchExtractor.epochs = 100
-TorchExtractor.batch_size = 32
+TorchExtractor.model_fn = @torch_extractor.cnn_from_obs
+TorchExtractor.epochs = 200
+TorchExtractor.batch_size = 512
 TorchExtractor.learning_rate = 0.001
-TorchExtractor.weight_decay = 0.00113
+TorchExtractor.cosine_anneal_t_max = 50
 
 torch_extractor.cnn_from_obs.input_shape = [6, 60, 100]
 torch_extractor.cnn_from_obs.cnn_first_size = 2

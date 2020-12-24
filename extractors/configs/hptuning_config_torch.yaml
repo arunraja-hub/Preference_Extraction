@@ -40,3 +40,9 @@ trainingInput:
         minValue: 0.001
         maxValue: 0.1
         scaleType: UNIT_LOG_SCALE
+        
+      - parameterName: gin_bindings=TorchExtractor.cosine_anneal_t_max
+        type: INTEGER
+        minValue: 0
+        maxValue: 200
+        scaleType: UNIT_LINEAR_SCALE

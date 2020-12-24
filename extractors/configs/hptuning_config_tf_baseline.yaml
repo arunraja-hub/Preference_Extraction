@@ -23,6 +23,12 @@ trainingInput:
         minValue: 0.00001
         maxValue: 0.5
         scaleType: UNIT_LOG_SCALE
+        
+  - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cosine_anneal_t_max
+        type: INTEGER
+        minValue: 0
+        maxValue: 200
+        scaleType: UNIT_LINEAR_SCALE
 
       - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_first_size
         type: INTEGER

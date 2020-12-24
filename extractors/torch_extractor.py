@@ -241,23 +241,22 @@ class TorchExtractor(extractor.Extractor):
     
     def __init__(self,
                  model_fn,
-                 epochs = 500,
-                 batch_size = 128,
-                 learning_rate = 1e-2,
-                 weight_decay = 0):
+                 epochs,
+                 batch_size,
+                 learning_rate,
+                 cosine_anneal_t_max):
         super().__init__()
 
         self.epochs = epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
-        self.weight_decay = weight_decay
+        self.cosine_anneal_t_max = cosine_anneal_t_max
 
         torch.set_printoptions(precision=8)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
-        
         self.model = model_fn(self.device)
     
     """
@@ -337,12 +336,9 @@ class TorchExtractor(extractor.Extractor):
         # if hasattr(model, 'layer_to_norm'):
         #    model.mu_s = get_heads_mu_and_sigma(model, x_train)
     
-        optimizer = optim.Adam(
-            [p for p in self.model.parameters() if p.requires_grad],
-            lr=self.learning_rate, weight_decay=self.weight_decay)
-        
+        optimizer = optim.Adam([p for p in self.model.parameters() if p.requires_grad], lr=self.learning_rate)
         criterion = nn.BCELoss().to(self.device)
-        scheduler = CosineAnnealingLR(optimizer, T_max=len(tr_data_loader))
+        scheduler = CosineAnnealingLR(optimizer, T_max=self.cosine_anneal_t_max)
 
         train_losses, test_losses = [], []
         train_accs, test_accs = [], []
