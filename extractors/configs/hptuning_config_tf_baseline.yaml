@@ -17,12 +17,6 @@ trainingInput:
         minValue: .001
         maxValue: .1
         scaleType: UNIT_LOG_SCALE
-
-      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.reg_amount
-        type: DOUBLE
-        minValue: 0.00001
-        maxValue: 0.2
-        scaleType: UNIT_LOG_SCALE
         
       - parameterName: gin_bindings=tf_extractor.cnn_from_obs.drop_rate
         type: DOUBLE

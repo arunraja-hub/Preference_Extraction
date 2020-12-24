@@ -78,12 +78,6 @@ trainingInput:
         - "True"
         - "False"
         
-      - parameterName: gin_bindings=agent_extractor.reg_amount
-        type: DOUBLE
-        minValue: 0.001
-        maxValue: 0.2
-        scaleType: UNIT_LOG_SCALE
-        
       - parameterName: gin_bindings=agent_extractor.drop_rate
         type: DOUBLE
         minValue: 0.01
