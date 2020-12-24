@@ -14,28 +14,24 @@ def get_val_auc(logs):
         if key.startswith('val_auc'):
             return logs[key]
 
-class BestStats(tf.keras.callbacks.Callback):
+class LastStats(tf.keras.callbacks.Callback):
     """A callback to keep track of the best val accuracy and auc seen so far."""
     def on_train_begin(self, logs):
-        self.bestMetric = -float('inf')
-        self.bestLogs = None
-        self.bestTrain = -float('inf')
+        self.lastAuc = -float('inf')
+        self.lastLogs = None
+        self.lastTrain = -float('inf')
         self.num_epochs = 0
 
     def on_epoch_end(self, epoch, logs):
         self.num_epochs += 1
-        self.bestTrain = max(self.bestTrain, logs.get('accuracy'))
+        self.lastTrain = logs.get('accuracy')
 
         val_accuracy = logs.get('val_accuracy')
         if val_accuracy == None:
             return 
         
-        val_auc = get_val_auc(logs)
-        metric = (val_accuracy + val_auc) / 2.0
-        
-        if metric > self.bestMetric:
-            self.bestMetric = metric
-            self.bestLogs = logs
+        self.lastAuc = get_val_auc(logs)
+        self.lastLogs = logs
 
 @gin.configurable
 class SlowlyUnfreezing(tf.keras.callbacks.Callback):
@@ -155,16 +151,16 @@ class TfExtractor(extractor.Extractor):
 
     def train_single(self, xs_train, ys_train, xs_val, ys_val):
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=0)
-        best_stats = BestStats()
-        callbacks = [early_stopping, best_stats]
+        stats = LastStats()
+        callbacks = [early_stopping, stats]
         if self.slowly_unfreezing:
             callbacks += [SlowlyUnfreezing()]
 
         self.model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
-                  callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
+                       callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
 
         self.model.summary()
-        print("best train accuracy:", best_stats.bestTrain)
-        print("Number of epochs:", best_stats.num_epochs, flush=True)
+        print("final train accuracy:", stats.lastTrain)
+        print("Number of epochs:", stats.num_epochs, flush=True)
 
-        return {'val_auc': get_val_auc(best_stats.bestLogs), 'val_accuracy': best_stats.bestLogs.get('val_accuracy')}
+        return {'val_auc': get_val_auc(stats.lastLogs), 'val_accuracy': stats.lastLogs.get('val_accuracy')}
