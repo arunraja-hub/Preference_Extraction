@@ -89,6 +89,7 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
             stride = 1
         layers.append(tf.keras.layers.Conv2D(layer_size, kernel_size, strides=stride, activation='relu',
                                              kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+        layers.append(tf.keras.layers.Dropout(drop_rate))
 
     if pooling:
         layers.append(tf.keras.layers.GlobalAveragePooling2D())
