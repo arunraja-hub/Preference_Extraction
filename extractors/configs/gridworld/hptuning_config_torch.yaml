@@ -7,12 +7,12 @@ trainingInput:
     maxTrials: 60
     maxParallelTrials: 5
     params:
-      - parameterName: gin_bindings=DATA_PATH
+      - parameterName: gin_bindings=AGENT_DIR
         type: CATEGORICAL
         categoricalValues:
-        - "'gs://pref-extr-data/gridworld/saved_model2/'"
+        - "'gs://pref-extr-data/gridworld/saved_model2'"
         
-      - parameterName: gin_bindings=AGENT_DIR
+      - parameterName: gin_bindings=DATA_PATH
         type: CATEGORICAL
         categoricalValues:
         - "'gs://pref-extr-data/gridworld/simple_env_1/'"
@@ -27,7 +27,7 @@ trainingInput:
         categoricalValues:
         - "Gridworld"
 
-      - parameterName: gin_bindings=TorchExtractor.subnet_k
+      - parameterName: gin_bindings=torch_extractor.agent_model.subnet_k
         type: CATEGORICAL
         categoricalValues:
         - "0.01"
@@ -36,7 +36,15 @@ trainingInput:
         - "0.5"
         - "0.75"
 
-      - parameterName: gin_bindings=TorchExtractor.randomize_weights
+      - parameterName: gin_bindings=torch_extractor.agent_model.scores_init
+        type: CATEGORICAL
+        categoricalValues:
+        - "'kaiming_normal'"
+        - "'kaiming_uniform'"
+        - "'xavier_normal'"
+        - "'uniform'"
+
+      - parameterName: gin_bindings=torch_extractor.agent_model.randomize_weights
         type: CATEGORICAL
         categoricalValues:
         - "True"
@@ -48,3 +56,9 @@ trainingInput:
         minValue: 0.001
         maxValue: 0.1
         scaleType: UNIT_LOG_SCALE
+        
+      - parameterName: gin_bindings=TorchExtractor.cosine_anneal_t_max
+        type: INTEGER
+        minValue: 0
+        maxValue: 200
+        scaleType: UNIT_LINEAR_SCALE

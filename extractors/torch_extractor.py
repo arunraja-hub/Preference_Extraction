@@ -52,7 +52,7 @@ def get_initializer(initializer_type):
     elif initializer_type == 'best_activation':
         return nn.init.ones_, {}
     else:
-        return nn.init.uniform_
+        return nn.init.uniform_, {}
 
 class SupermaskConv(nn.Conv2d):
     def __init__(self, *args, k, scores_init='kaiming_uniform', **kwargs):
@@ -158,7 +158,7 @@ def cnn_from_obs(device, input_shape, cnn_first_size, cnn_last_size, cnn_num_lay
     return nn.Sequential(*layers)
 
 @gin.configurable
-def agent_model(device, agent_path, input_shape, subnet_k, randomize_weights):
+def agent_model(device, agent_path, input_shape, subnet_k, scores_init, randomize_weights):
     print("Torch agent_model", flush=True)
 
     agent = tf.keras.models.load_model(agent_path)
@@ -174,7 +174,7 @@ def agent_model(device, agent_path, input_shape, subnet_k, randomize_weights):
             last_shape = layer.output_shape[0]
 
         elif isinstance(layer, tf.keras.layers.Conv2D):
-            torch_layer = SupermaskConv(in_channels=last_shape[-1], out_channels=layer.filters,
+            torch_layer = SupermaskConv(in_channels=last_shape[-1], out_channels=layer.filters, scores_init=scores_init,
                                         kernel_size=layer.kernel_size, stride=layer.strides, bias=True, k=subnet_k)
             torch_layers.append(torch_layer)
             last_shape = layer.output_shape
@@ -185,7 +185,7 @@ def agent_model(device, agent_path, input_shape, subnet_k, randomize_weights):
 
         elif isinstance(layer, tf.keras.layers.Dense):
             torch_layer = SupermaskLinear(in_features=last_shape[-1], out_features=layer.weights[0].shape[-1],
-                                          bias=True, k=subnet_k)
+                                          scores_init=scores_init, bias=True, k=subnet_k)
             torch_layers.append(torch_layer)
             last_shape = layer.output_shape
 
