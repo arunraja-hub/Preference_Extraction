@@ -95,11 +95,12 @@ if __name__ == "__main__":
     trn_size = 50
     val_size = 500
     no_of_runs = 10
+    data_size = (trn_size+val_size)*no_of_runs
     
-    xs_train = xs[:(trn_size+val_size)*no_of_runs]
-    ys_train = ys[:(trn_size+val_size)*no_of_runs]
-    xs_test = xs[(trn_size+val_size)*no_of_runs:(trn_size+val_size)*(no_of_runs*2)]
-    ys_test = ys[(trn_size+val_size)*no_of_runs:(trn_size+val_size)*(no_of_runs+2)]
+    xs_train = xs[:data_size]
+    ys_train = ys[:data_size]
+    xs_test = xs[data_size:data_size*2]
+    ys_test = ys[data_size:data_size*2]
     
     print('Train shapes', xs_train.shape, ys_train.shape)
     print('Test shapes', xs_test.shape, ys_test.shape)

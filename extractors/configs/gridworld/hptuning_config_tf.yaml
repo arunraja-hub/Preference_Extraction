@@ -87,9 +87,9 @@ trainingInput:
         
       - parameterName: gin_bindings=tf_extractor.agent_extractor.drop_rate
         type: DOUBLE
-        minValue: 0.01
-        maxValue: 0.2
-        scaleType: UNIT_LOG_SCALE
+        minValue: 0
+        maxValue: 0.5
+        scaleType: UNIT_LINEAR_SCALE
         
       - parameterName: gin_bindings=tf_extractor.agent_extractor.cosine_anneal_t_max
         type: INTEGER
