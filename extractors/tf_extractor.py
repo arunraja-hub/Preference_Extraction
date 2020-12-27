@@ -14,28 +14,24 @@ def get_val_auc(logs):
         if key.startswith('val_auc'):
             return logs[key]
 
-class BestStats(tf.keras.callbacks.Callback):
+class LastStats(tf.keras.callbacks.Callback):
     """A callback to keep track of the best val accuracy and auc seen so far."""
     def on_train_begin(self, logs):
-        self.bestMetric = -float('inf')
-        self.bestLogs = None
-        self.bestTrain = -float('inf')
+        self.lastAuc = -float('inf')
+        self.lastLogs = None
+        self.lastTrain = -float('inf')
         self.num_epochs = 0
 
     def on_epoch_end(self, epoch, logs):
         self.num_epochs += 1
-        self.bestTrain = max(self.bestTrain, logs.get('accuracy'))
+        self.lastTrain = logs.get('accuracy')
 
         val_accuracy = logs.get('val_accuracy')
         if val_accuracy == None:
             return 
         
-        val_auc = get_val_auc(logs)
-        metric = (val_accuracy + val_auc) / 2.0
-        
-        if metric > self.bestMetric:
-            self.bestMetric = metric
-            self.bestLogs = logs
+        self.lastAuc = get_val_auc(logs)
+        self.lastLogs = logs
 
 @gin.configurable
 class SlowlyUnfreezing(tf.keras.callbacks.Callback):
@@ -61,15 +57,26 @@ def get_dense_layers(fc_layer_sizes, reg_amount, drop_rate):
     layers = []
     for layer_size in fc_layer_sizes:
         layers.append(tf.keras.layers.Dense(layer_size, activation='relu',
-                                              kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+                                            kernel_regularizer=tf.keras.regularizers.l2(reg_amount),
+                                            kernel_initializer=tf.keras.initializers.VarianceScaling(),
+                                            bias_initializer=tf.keras.initializers.RandomUniform()))
         layers.append(tf.keras.layers.Dropout(drop_rate))
     layers.append(tf.keras.layers.Dense(1, activation='sigmoid', kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
 
     return layers
 
+def custom_loss():
+    return tf.keras.losses.BinaryCrossentropy(from_logits=False, label_smoothing=0, name='binary_crossentropy',
+                                              reduction=tf.keras.losses.Reduction.SUM_OVER_BATCH_SIZE)
+
+def cosine_anneal_lr(initial_lr, t_max):
+    return tf.keras.experimental.CosineDecay(initial_lr, t_max)
+
+
 @gin.configurable
 def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn_stride_every_n, kernel_size,
-                 fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate, pick_random_col_ch, pooling):
+                 fc_first_size, fc_last_size, fc_num_layers, reg_amount, drop_rate, learning_rate, cosine_anneal_t_max,
+                 pick_random_col_ch, pooling):
     """
        Simple Convolutional Neural Network
        that extracts preferences from observations
@@ -88,8 +95,14 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
         else:
             stride = 1
         layers.append(tf.keras.layers.Conv2D(layer_size, kernel_size, strides=stride, activation='relu',
-                                             kernel_regularizer=tf.keras.regularizers.l2(reg_amount)))
+                                             kernel_regularizer=tf.keras.regularizers.l2(reg_amount),
+                                             kernel_initializer=tf.keras.initializers.VarianceScaling(),
+                                             bias_initializer=tf.keras.initializers.RandomUniform()))
+        layers.append(tf.keras.layers.Dropout(drop_rate))
 
+        
+
+        
     if pooling:
         layers.append(tf.keras.layers.GlobalAveragePooling2D())
 
@@ -100,8 +113,8 @@ def cnn_from_obs(input_shape, cnn_first_size, cnn_last_size, cnn_num_layers, cnn
 
     model = tf.keras.models.Sequential(layers)
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate), loss='binary_crossentropy',
-                  metrics=['accuracy', tf.keras.metrics.AUC()])
+    model.compile(optimizer=tf.keras.optimizers.Adam(cosine_anneal_lr(learning_rate, cosine_anneal_t_max)), 
+                  loss=custom_loss(), metrics=['accuracy', tf.keras.metrics.AUC()])
 
     return model
 
@@ -113,8 +126,8 @@ def reset_model_weights(model):
             keras_layer.set_weights([weights, biases])
 
 @gin.configurable            
-def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, 
-                    first_size, last_size, num_layers, reg_amount, drop_rate, randomize_weights):
+def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers, first_size, last_size, num_layers, 
+                    reg_amount, drop_rate, learning_rate, cosine_anneal_t_max, randomize_weights):
     """
         Builds a network to extract preferences
         From the RL agent originally trained in the enviroment
@@ -129,8 +142,8 @@ def agent_extractor(agent_path, agent_last_layer, agent_freezed_layers,
 
     model = tf.keras.models.Sequential(agent.layers[:agent_last_layer] + layers)
     
-    model.compile(optimizer=tf.keras.optimizers.Adam(.01), loss='binary_crossentropy',
-                  metrics=['accuracy', tf.keras.metrics.AUC()])
+    model.compile(optimizer=tf.keras.optimizers.Adam(cosine_anneal_lr(learning_rate, cosine_anneal_t_max)), 
+                  loss=custom_loss(), metrics=['accuracy', tf.keras.metrics.AUC()])
     
     if randomize_weights:
         reset_model_weights(model)
@@ -154,17 +167,18 @@ class TfExtractor(extractor.Extractor):
         self.slowly_unfreezing = slowly_unfreezing
 
     def train_single(self, xs_train, ys_train, xs_val, ys_val):
+        tf.keras.backend.clear_session()
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=0)
-        best_stats = BestStats()
-        callbacks = [early_stopping, best_stats]
+        stats = LastStats()
+        callbacks = [early_stopping, stats]
         if self.slowly_unfreezing:
             callbacks += [SlowlyUnfreezing()]
 
         self.model.fit(xs_train, ys_train, epochs=self.epochs, batch_size=self.batch_size,
-                  callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
+                       callbacks=callbacks, validation_data=(xs_val, ys_val), verbose=0)
 
         self.model.summary()
-        print("best train accuracy:", best_stats.bestTrain)
-        print("Number of epochs:", best_stats.num_epochs, flush=True)
+        print("final train accuracy:", stats.lastTrain)
+        print("Number of epochs:", stats.num_epochs, flush=True)
 
-        return {'val_auc': get_val_auc(best_stats.bestLogs), 'val_accuracy': best_stats.bestLogs.get('val_accuracy')}
+        return {'val_auc': get_val_auc(stats.lastLogs), 'val_accuracy': stats.lastLogs.get('val_accuracy')}

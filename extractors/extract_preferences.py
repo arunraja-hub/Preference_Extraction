@@ -2,6 +2,7 @@
     Main launcher for preference extraction experiments
 """
 import os
+import pickle
 
 from absl import app
 from absl import flags
@@ -15,9 +16,7 @@ import gin.tf.external_configurables
 import hypertune
 import numpy as np
 
-from data_getter import get_data_from_file, get_data_from_folder
-from data_processing import transform_to_x_y, rebalance_data_to_minority_class
-
+from tensorflow.python.lib.io import file_io
 from tf_extractor import TfExtractor
 from torch_extractor import TorchExtractor
 
@@ -29,29 +28,23 @@ flags.DEFINE_multi_string('gin_bindings', None, 'Gin binding to pass through.')
 FLAGS = flags.FLAGS
 
 @gin.configurable
-def data_pipeline(data_path, from_file=True, env='doom', rebalance=True):
-    if from_file:
-        data = get_data_from_file(data_path)
-    else: # for data as list of trajectory files
-        data = get_data_from_folder(data_path)
+def data_pipeline(data_path):
+    with file_io.FileIO(data_path, mode='rb') as fIn:
+        data = pickle.load(fIn)
+    return data
 
-    xs, ys = transform_to_x_y(data, env=env)
-    if rebalance:
-        xs, ys = rebalance_data_to_minority_class(xs, ys)
-    
-    return xs, ys
 
 @gin.configurable
 def train_and_report_metrics(xs, ys, num_repeat, extractor_class, useless_var_for_hparam_search=None):
     """
-        Trains the model multiple times with the same parameters and returns the average metrics
+    Trains the model multiple times with the same parameters and returns the average metrics
     """
 
     all_val_auc = []
     all_val_accuracy = []
 
     for i in range(num_repeat):
-        single_train_metrics = extractor_class().train_single_shuffle(xs, ys)
+        single_train_metrics = extractor_class().train_single_run(xs, ys, i)
 
         all_val_auc.append(single_train_metrics['val_auc'])
         all_val_accuracy.append(single_train_metrics['val_accuracy'])
@@ -81,7 +74,7 @@ def main(_):
     gin.parse_config_files_and_bindings(FLAGS.gin_file, FLAGS.gin_bindings, skip_unknown=True)
     
     xs, ys = data_pipeline()
-    
+
     with gin.unlock_config():
         gin.bind_parameter('%INPUT_SHAPE', xs.shape[1:])
 

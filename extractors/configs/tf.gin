@@ -1,11 +1,8 @@
 AGENT_DIR = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/saved_model_cp_8000"
-DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_10000.pkl"
+DATA_PATH = "gs://pref-extr-data/doom/data/train_val_data_1.pkl"
 INPUT_SHAPE = None
 
 data_pipeline.data_path = %DATA_PATH
-data_pipeline.from_file = True
-data_pipeline.env = "Doom"
-data_pipeline.rebalance = True
 
 train_and_report_metrics.num_repeat = 10
 train_and_report_metrics.extractor_class = @TfExtractor
@@ -16,7 +13,7 @@ Extractor.num_val = 500
 TfExtractor.model_fn = @tf_extractor.cnn_from_obs
 TfExtractor.epochs = 200
 TfExtractor.batch_size = 512
-TfExtractor.slowly_unfreezing = True
+TfExtractor.slowly_unfreezing = False
 
 SlowlyUnfreezing.unfreze_every_n_epochs = 10
 SlowlyUnfreezing.start_unfreezing_from = 3
@@ -34,14 +31,17 @@ tf_extractor.cnn_from_obs.pooling = False
 tf_extractor.cnn_from_obs.reg_amount = 0
 tf_extractor.cnn_from_obs.drop_rate = 0
 tf_extractor.cnn_from_obs.learning_rate = .01
+tf_extractor.cnn_from_obs.cosine_anneal_t_max = 50
 tf_extractor.cnn_from_obs.kernel_size = 3
 
-agent_extractor.agent_path = %AGENT_DIR
-agent_extractor.agent_last_layer = 4
-agent_extractor.agent_freezed_layers = ()
-agent_extractor.first_size= 32
-agent_extractor.last_size = 32
-agent_extractor.num_layers = 1
-agent_extractor.reg_amount = 0
-agent_extractor.drop_rate = 0
-agent_extractor.randomize_weights = True
+tf_extractor.agent_extractor.agent_path = %AGENT_DIR
+tf_extractor.agent_extractor.agent_last_layer = 4
+tf_extractor.agent_extractor.agent_freezed_layers = ()
+tf_extractor.agent_extractor.first_size= 32
+tf_extractor.agent_extractor.last_size = 32
+tf_extractor.agent_extractor.num_layers = 1
+tf_extractor.agent_extractor.reg_amount = 0
+tf_extractor.agent_extractor.drop_rate = 0
+tf_extractor.agent_extractor.learning_rate = .01
+tf_extractor.agent_extractor.cosine_anneal_t_max = 50
+tf_extractor.agent_extractor.randomize_weights = False

@@ -1,4 +1,8 @@
+import os
+
 import numpy as np
+
+from data_getter import get_data_from_file, get_data_from_folder, write_file
 
 DOOM_HUMAN_MAX_ANGLE = 90
 DOOM_HUMAN_MIN_ANGLE = 270
@@ -54,3 +58,55 @@ def rebalance_data_to_minority_class(xs, ys):
     print('Data rebalanced from', original_ys.shape, 'to', ys.shape)
     
     return xs, ys
+
+def data_pipeline(data_path, from_file=True, env='doom', rebalance=True):
+    if from_file:
+        data = get_data_from_file(data_path)
+    else: # for data as list of trajectory files
+        data = get_data_from_folder(data_path)
+
+    xs, ys = transform_to_x_y(data, env=env)
+    if rebalance:
+        xs, ys = rebalance_data_to_minority_class(xs, ys)
+    
+    return xs, ys
+
+def reshuffle_data(xs, ys):
+    randomize = np.arange(len(xs))
+    np.random.shuffle(randomize)
+    xs = xs[randomize]
+    ys = ys[randomize]
+    return xs, ys
+
+if __name__ == "__main__":
+    
+    # pre-training data creation
+    data_path = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_20000.pkl"
+    from_file = True
+    env = "doom"
+    rebalance = True
+    data_version = '1' # increase this if you want to create new versions of the data
+    gcs_bucket = 'gs://pref-extr-data/{}/'.format(env.lower())
+    
+    xs, ys = data_pipeline(data_path=data_path, from_file=from_file, env=env, rebalance=rebalance)
+    xs, ys = reshuffle_data(xs, ys)
+    
+    # create train_train, train_validate, test_train, test_validate datasets
+    trn_size = 50
+    val_size = 500
+    no_of_runs = 10
+    data_size = (trn_size+val_size)*no_of_runs
+    
+    xs_train = xs[:data_size]
+    ys_train = ys[:data_size]
+    xs_test = xs[data_size:data_size*2]
+    ys_test = ys[data_size:data_size*2]
+    
+    print('Train shapes', xs_train.shape, ys_train.shape)
+    print('Test shapes', xs_test.shape, ys_test.shape)
+    
+    # save data to GCS
+    train_path = os.path.join(gcs_bucket, 'data', 'train_val_data_{}.pkl'.format(data_version))
+    test_path = os.path.join(gcs_bucket, 'data', 'test_val_data_{}.pkl'.format(data_version))
+    write_file(train_path, (xs_train, ys_train))
+    write_file(test_path, (xs_test, ys_test))

@@ -12,19 +12,19 @@ trainingInput:
         categoricalValues:
         - "@tf_extractor.agent_extractor"
 
-      - parameterName: gin_bindings=agent_extractor.first_size
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.first_size
         type: INTEGER
         minValue: 8
         maxValue: 128
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=agent_extractor.last_size
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.last_size
         type: INTEGER
         minValue: 4
         maxValue: 32
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=agent_extractor.num_layers
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.num_layers
         type: INTEGER
         minValue: 0
         maxValue: 4
@@ -37,7 +37,7 @@ trainingInput:
         - "'gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000'"
         - "'gs://pref_extract_train_output/search_dqn_40000rb_1365442/39/saved_model_cp_260000'"
         
-      - parameterName: gin_bindings=agent_extractor.agent_last_layer
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.agent_last_layer
         type: INTEGER
         minValue: 3
         maxValue: 5
@@ -49,7 +49,7 @@ trainingInput:
         - "True"
         - "False"
 
-      - parameterName: gin_bindings=agent_extractor.agent_freezed_layers
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.agent_freezed_layers
         type: CATEGORICAL
         categoricalValues:
         - "()"
@@ -72,20 +72,20 @@ trainingInput:
         maxValue: 100
         scaleType: UNIT_LOG_SCALE
 
-      - parameterName: gin_bindings=agent_extractor.randomize_weights
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.randomize_weights
         type: CATEGORICAL
         categoricalValues:
         - "True"
         - "False"
         
-      - parameterName: gin_bindings=agent_extractor.reg_amount
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.drop_rate
         type: DOUBLE
-        minValue: 0.001
-        maxValue: 0.2
-        scaleType: UNIT_LOG_SCALE
+        minValue: 0
+        maxValue: 0.5
+        scaleType: UNIT_LINEAR_SCALE
         
-      - parameterName: gin_bindings=agent_extractor.drop_rate
-        type: DOUBLE
-        minValue: 0.01
-        maxValue: 0.2
-        scaleType: UNIT_LOG_SCALE
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.cosine_anneal_t_max
+        type: INTEGER
+        minValue: 0
+        maxValue: 200
+        scaleType: UNIT_LINEAR_SCALE

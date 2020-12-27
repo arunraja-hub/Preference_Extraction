@@ -7,45 +7,35 @@ trainingInput:
     maxTrials: 60
     maxParallelTrials: 5
     params:
-      - parameterName: gin_bindings=DATA_PATH
-        type: CATEGORICAL
-        categoricalValues:
-        - "'gs://pref-extr-data/gridworld/saved_model2/'"
-        
       - parameterName: gin_bindings=AGENT_DIR
         type: CATEGORICAL
         categoricalValues:
-        - "'gs://pref-extr-data/gridworld/simple_env_1/'"
-
-      - parameterName: gin_bindings=data_pipeline.from_file
+        - "'gs://pref-extr-data/gridworld/saved_model2'"
+        
+      - parameterName: gin_bindings=DATA_PATH
         type: CATEGORICAL
         categoricalValues:
-        - "False"
+        - "'gs://pref-extr-data/gridworld/data/train_val_data_1.pkl'"
 
-      - parameterName: gin_bindings=data_pipeline.env
-        type: CATEGORICAL
-        categoricalValues:
-        - "Gridworld"
-
-      - parameterName: gin_bindings=agent_extractor.first_size
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.first_size
         type: INTEGER
         minValue: 8
         maxValue: 128
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=agent_extractor.last_size
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.last_size
         type: INTEGER
         minValue: 4
         maxValue: 32
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=agent_extractor.num_layers
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.num_layers
         type: INTEGER
         minValue: 0
         maxValue: 4
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=agent_extractor.agent_last_layer
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.agent_last_layer
         type: INTEGER
         minValue: 3
         maxValue: 5
@@ -56,7 +46,7 @@ trainingInput:
         categoricalValues:
         - "False"
 
-      - parameterName: gin_bindings=agent_extractor.agent_freezed_layers
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.agent_freezed_layers
         type: CATEGORICAL
         categoricalValues:
         - "()"
@@ -79,20 +69,20 @@ trainingInput:
         maxValue: 100
         scaleType: UNIT_LOG_SCALE
 
-      - parameterName: gin_bindings=agent_extractor.randomize_weights
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.randomize_weights
         type: CATEGORICAL
         categoricalValues:
         - "True"
         - "False"
         
-      - parameterName: gin_bindings=agent_extractor.reg_amount
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.drop_rate
         type: DOUBLE
-        minValue: 0.001
-        maxValue: 0.2
-        scaleType: UNIT_LOG_SCALE
+        minValue: 0
+        maxValue: 0.5
+        scaleType: UNIT_LINEAR_SCALE
         
-      - parameterName: gin_bindings=agent_extractor.drop_rate
-        type: DOUBLE
-        minValue: 0.01
-        maxValue: 0.2
-        scaleType: UNIT_LOG_SCALE
+      - parameterName: gin_bindings=tf_extractor.agent_extractor.cosine_anneal_t_max
+        type: INTEGER
+        minValue: 0
+        maxValue: 200
+        scaleType: UNIT_LINEAR_SCALE

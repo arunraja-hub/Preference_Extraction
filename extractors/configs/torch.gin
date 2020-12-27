@@ -1,11 +1,8 @@
 AGENT_DIR = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/19/saved_model_cp_12000"
-DATA_PATH = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_10000.pkl"
+DATA_PATH = "gs://pref-extr-data/doom/data/train_val_data_1.pkl"
 INPUT_SHAPE = None
 
 data_pipeline.data_path = %DATA_PATH
-data_pipeline.from_file = True
-data_pipeline.env = "Doom"
-data_pipeline.rebalance = True
 
 Extractor.num_train = 50
 Extractor.num_val = 500
@@ -14,10 +11,10 @@ train_and_report_metrics.num_repeat = 10
 train_and_report_metrics.extractor_class = @TorchExtractor
 
 TorchExtractor.model_fn = @torch_extractor.agent_model
-TorchExtractor.epochs = 100
-TorchExtractor.batch_size = 32
+TorchExtractor.epochs = 200
+TorchExtractor.batch_size = 512
 TorchExtractor.learning_rate = 0.001
-TorchExtractor.weight_decay = 0.00113
+TorchExtractor.cosine_anneal_t_max = 50
 
 torch_extractor.cnn_from_obs.input_shape = [6, 60, 100]
 torch_extractor.cnn_from_obs.cnn_first_size = 2
@@ -32,4 +29,5 @@ torch_extractor.cnn_from_obs.drop_rate = 0.00001
 torch_extractor.agent_model.agent_path = %AGENT_DIR
 torch_extractor.agent_model.input_shape = %INPUT_SHAPE
 torch_extractor.agent_model.subnet_k = 0.75
+torch_extractor.agent_model.scores_init = 'uniform'
 torch_extractor.agent_model.randomize_weights = False

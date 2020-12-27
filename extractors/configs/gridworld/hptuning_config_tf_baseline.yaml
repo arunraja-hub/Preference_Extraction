@@ -7,52 +7,46 @@ trainingInput:
     maxTrials: 60
     maxParallelTrials: 5
     params:
-      - parameterName: gin_bindings=AGENT_DIR
+      - parameterName: gin_bindings=DATA_PATH
         type: CATEGORICAL
         categoricalValues:
-        - "'gs://pref-extr-data/gridworld/simple_env_1/'"
+        - "'gs://pref-extr-data/gridworld/data/train_val_data_1.pkl'"
 
-      - parameterName: gin_bindings=TfExtractor.extractor_fn
+      - parameterName: gin_bindings=TfExtractor.model_fn
         type: CATEGORICAL
         categoricalValues:
-        - "@cnn_from_obs"
+        - "@tf_extractor.cnn_from_obs"
 
-      - parameterName: gin_bindings=cnn_from_obs.learning_rate
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.learning_rate
         type: DOUBLE
         minValue: .001
         maxValue: .1
         scaleType: UNIT_LOG_SCALE
-
-      - parameterName: gin_bindings=cnn_from_obs.reg_amount
-        type: DOUBLE
-        minValue: 0.00001
-        maxValue: 0.2
-        scaleType: UNIT_LOG_SCALE
         
-      - parameterName: gin_bindings=cnn_from_obs.drop_rate
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.drop_rate
         type: DOUBLE
-        minValue: 0.00001
+        minValue: 0
         maxValue: 0.5
-        scaleType: UNIT_LOG_SCALE
+        scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=cnn_from_obs.kernel_size
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.kernel_size
         type: INTEGER
         minValue: 2
         maxValue: 3
         scaleType: UNIT_LINEAR_SCALE
 
-      - parameterName: gin_bindings=cnn_from_obs.fc_num_layers
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_num_layers
         type: CATEGORICAL
         categoricalValues:
         - "0"
     
-      - parameterName: gin_bindings=cnn_from_obs.pick_random_col_ch
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.pick_random_col_ch
         type: CATEGORICAL
         categoricalValues:
         - "True"
         - "False"
     
-      - parameterName: gin_bindings=cnn_from_obs.pooling
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.pooling
         type: CATEGORICAL
         categoricalValues:
         - "True"
@@ -62,3 +56,9 @@ trainingInput:
         type: CATEGORICAL
         categoricalValues:
         - "False"
+        
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cosine_anneal_t_max
+        type: INTEGER
+        minValue: 0
+        maxValue: 200
+        scaleType: UNIT_LINEAR_SCALE
