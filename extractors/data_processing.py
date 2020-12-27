@@ -81,9 +81,9 @@ def reshuffle_data(xs, ys):
 if __name__ == "__main__":
     
     # pre-training data creation
-    data_path = "gs://pref-extr-data/gridworld/simple_env_1/"
-    from_file = False
-    env = "gridworld"
+    data_path = "gs://pref_extract_train_output/ppo_search_log_fix_1455626/10/exp_data_20000.pkl"
+    from_file = True
+    env = "doom"
     rebalance = True
     data_version = '1' # increase this if you want to create new versions of the data
     gcs_bucket = 'gs://pref-extr-data/{}/'.format(env.lower())

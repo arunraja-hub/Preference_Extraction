@@ -17,16 +17,6 @@ trainingInput:
         categoricalValues:
         - "'gs://pref-extr-data/gridworld/data/train_val_data_1.pkl'"
 
-      - parameterName: gin_bindings=data_pipeline.from_file
-        type: CATEGORICAL
-        categoricalValues:
-        - "False"
-
-      - parameterName: gin_bindings=data_pipeline.env
-        type: CATEGORICAL
-        categoricalValues:
-        - "Gridworld"
-
       - parameterName: gin_bindings=tf_extractor.agent_extractor.first_size
         type: INTEGER
         minValue: 8

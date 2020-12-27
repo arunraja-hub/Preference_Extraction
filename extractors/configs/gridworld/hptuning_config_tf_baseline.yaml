@@ -12,10 +12,10 @@ trainingInput:
         categoricalValues:
         - "'gs://pref-extr-data/gridworld/data/train_val_data_1.pkl'"
 
-      - parameterName: gin_bindings=TfExtractor.extractor_fn
+      - parameterName: gin_bindings=TfExtractor.model_fn
         type: CATEGORICAL
         categoricalValues:
-        - "@cnn_from_obs"
+        - "@tf_extractor.cnn_from_obs"
 
       - parameterName: gin_bindings=tf_extractor.cnn_from_obs.learning_rate
         type: DOUBLE
