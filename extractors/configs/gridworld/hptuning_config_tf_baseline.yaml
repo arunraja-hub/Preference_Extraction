@@ -31,8 +31,8 @@ trainingInput:
 
       - parameterName: gin_bindings=tf_extractor.cnn_from_obs.kernel_size
         type: INTEGER
-        minValue: 2
-        maxValue: 3
+        minValue: 1
+        maxValue: 2
         scaleType: UNIT_LINEAR_SCALE
 
       - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_num_layers

@@ -16,6 +16,11 @@ trainingInput:
         type: CATEGORICAL
         categoricalValues:
         - "'gs://pref-extr-data/gridworld/data/train_val_data_1.pkl'"
+        
+      - parameterName: gin_bindings=TfExtractor.model_fn
+        type: CATEGORICAL
+        categoricalValues:
+        - "@tf_extractor.agent_extractor"
 
       - parameterName: gin_bindings=tf_extractor.agent_extractor.first_size
         type: INTEGER
@@ -45,6 +50,7 @@ trainingInput:
         type: CATEGORICAL
         categoricalValues:
         - "False"
+        - "True"
 
       - parameterName: gin_bindings=tf_extractor.agent_extractor.agent_freezed_layers
         type: CATEGORICAL
