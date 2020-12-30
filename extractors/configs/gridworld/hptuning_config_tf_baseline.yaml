@@ -35,10 +35,47 @@ trainingInput:
         maxValue: 2
         scaleType: UNIT_LINEAR_SCALE
 
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_first_size
+        type: INTEGER
+        minValue: 2
+        maxValue: 64
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_last_size
+        type: INTEGER
+        minValue: 2
+        maxValue: 128
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_num_layers
+        type: INTEGER
+        minValue: 0
+        maxValue: 4
+        scaleType: UNIT_LINEAR_SCALE
+        
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_first_size
+        type: INTEGER
+        minValue: 8
+        maxValue: 128
+        scaleType: UNIT_LINEAR_SCALE
+
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_last_size
+        type: INTEGER
+        minValue: 4
+        maxValue: 32
+        scaleType: UNIT_LINEAR_SCALE
+
       - parameterName: gin_bindings=tf_extractor.cnn_from_obs.fc_num_layers
-        type: CATEGORICAL
-        categoricalValues:
-        - "0"
+        type: INTEGER
+        minValue: 0
+        maxValue: 4
+        scaleType: UNIT_LINEAR_SCALE
+        
+      - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cnn_stride_every_n
+        type: INTEGER
+        minValue: 1
+        maxValue: 1
+        scaleType: UNIT_LINEAR_SCALE
     
       - parameterName: gin_bindings=tf_extractor.cnn_from_obs.pick_random_col_ch
         type: CATEGORICAL
@@ -59,6 +96,6 @@ trainingInput:
         
       - parameterName: gin_bindings=tf_extractor.cnn_from_obs.cosine_anneal_t_max
         type: INTEGER
-        minValue: 0
+        minValue: 1
         maxValue: 200
         scaleType: UNIT_LINEAR_SCALE
