@@ -1,4 +1,4 @@
-# To run locally:
+# To run locally 💻
 
 `python train.py --root_dir some/dir`
 
@@ -13,7 +13,7 @@ The training and environment parameters can be changed there. See https://github
 
 Also see https://www.tensorflow.org/agents
 
-# To launch on g cloud
+# To launch on Google Cloud ☁️
 This process will download a few gigs the first time. It will be faster the next time.
 
 Follow instructions at the [Before you begin section](https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin).
