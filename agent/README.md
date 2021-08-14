@@ -4,9 +4,9 @@
 
 `python eval.py --root_dir some/dir`
 
-You can run both of these at the same time, or eval after train.
+You can run both of these at the same time, or `train.py` followed by `eval.py`.
 
-`tensorboard --logdir some/dir` to see the result.
+To track the progress, you can launch Tensorboard: `tensorboard --logdir some/dir` to see the result.
 
 You probably won't need to modify any of the training code, since it can all be configured by the files in the configs directory.
 The training and environment parameters can be changed there. See https://github.com/google/gin-config to learn more.
@@ -14,9 +14,9 @@ The training and environment parameters can be changed there. See https://github
 Also see https://www.tensorflow.org/agents
 
 # To launch on Google Cloud ☁️
-This process will download a few gigs the first time. It will be faster the next time.
+This process will download a few GB the first time. It will be faster the next time.
 
-Follow instructions at the [Before you begin section](https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin).
+Follow instructions at the [Before you begin section](https://cloud.google.com/ai-platform/training/docs/custom-containers-training#before_you_begin) on Google Cloud's website.
     
     chmod +x launch_cloud.sh
     ./launch_cloud.sh job_name env_type agent_type hyperp_tune_bool
