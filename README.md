@@ -6,7 +6,7 @@ Developing safe and beneficial AI systems requires making them aware and aligned
 Our project report has been published on LessWrong which includes a detailed overview of our intermediate results as well:  
 
 ## Running experiments 🧪
-Please refer to the Colab notebooks and the readme in [/agent](https://github.com/arunraja-hub/Preference_Extraction/tree/master/agent) for details on the agents.
+Please refer to the notebooks and the readme in [/agent](https://github.com/arunraja-hub/Preference_Extraction/tree/master/agent) for details on the agents.
 
 ## Team 🧑‍🤝‍🧑
 Arun Raja, Mislav Juric, Nevan Wichers, Riccardo Volpato
