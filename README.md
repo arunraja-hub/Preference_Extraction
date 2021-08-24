@@ -14,6 +14,17 @@ Arun Raja, Mislav Juric, Nevan Wichers, Riccardo Volpato
 ## Acknowledgements 🙏
 We would like to thank Paul Christiano, Evan Hubinger, Jacob Hilton and Christos Dimitrakakis for their research advice during AI Safety Camp 2020.
 
+## References 📚
+
+[Deep Reinforcement Learning from Human Preferences.](https://proceedings.neurips.cc/paper/2017/file/d5e2c0adad503c91f91df240d0cd4e49-Paper.pdf) Christiano et. al. (2017)
+
+[RL Agents Implicitly Learning Human Preferences.](https://arxiv.org/pdf/2002.06137.pdf) Wichers N. (2020)
+
+[Understanding RL Vision. Hilton et. al.](https://distill.pub/2020/understanding-rl-vision/) (2020)
+
+[ViZDoom GitHub code repository.](https://github.com/mwydmuch/ViZDoom) Wydmuch et. al. (2018)
+
+[What's Hidden in a Randomly Weighted Neural Network?.](https://openaccess.thecvf.com/content_CVPR_2020/papers/Ramanujan_Whats_Hidden_in_a_Randomly_Weighted_Neural_Network_CVPR_2020_paper.pdf) Ramanujan et. al. (2020)
 
 
 
