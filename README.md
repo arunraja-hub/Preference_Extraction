@@ -12,7 +12,7 @@ Please refer to the Colab notebooks and the readme in [/agent](https://github.co
 Arun Raja, Mislav Juric, Nevan Wichers, Riccardo Volpato
 
 ## Acknowledgements 🙏
-We would like to thank Paul Christiano, Evan Hubinger and Christos Dimitrakakis for their research advice during AI Safety Camp 2020.
+We would like to thank Paul Christiano, Evan Hubinger, Jacob Hilton and Christos Dimitrakakis for their research advice during AI Safety Camp 2020.
 
 
 
