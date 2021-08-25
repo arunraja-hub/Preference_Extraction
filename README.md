@@ -9,7 +9,7 @@ Our project report has been published on LessWrong which includes a detailed ove
 Please refer to the notebooks and the readme in [/agent](https://github.com/arunraja-hub/Preference_Extraction/tree/master/agent) for details on the agents.
 
 ## Team 🧑‍🤝‍🧑
-Arun Raja, Mislav Juric, Nevan Wichers, Riccardo Volpato
+Nevan Wichers, Riccardo Volpato, Mislav Jurić and Arun Raja
 
 ## Acknowledgements 🙏
 We would like to thank Paul Christiano, Evan Hubinger, Jacob Hilton and Christos Dimitrakakis for their research advice during AI Safety Camp 2020.
