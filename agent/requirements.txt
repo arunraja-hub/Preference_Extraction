@@ -1,4 +1,4 @@
-tensorflow==2.2.1
+tensorflow==2.5.3
 tensorflow-probability==0.10
 tf-agents==0.5.0
 gin-config==0.1.3
